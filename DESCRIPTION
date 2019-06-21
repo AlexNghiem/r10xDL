@@ -1,0 +1,10 @@
+Package: r10xDeepLearning
+Title: Analyzes 10X Genomics Data to Correlate GEX Data to Flow Data
+Version: 0.0.0.9000
+Authors@R: person("Alex", "Nghiem", email = "alexandernghiem@gmail.com", role = c("aut", "cre"))
+Description: 10X Genomics recently (4 June 2019) released a large data set of around 150,000 T-cells across 4 donors. For each cell, the data set includes gene expression data (GEX) as well as protein data. This package seeks to analyze and visualize this data, and use machine learning to draw connections between these two classes of data. 
+Depends: R (>= 3.6.0)
+License: ? license ?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
