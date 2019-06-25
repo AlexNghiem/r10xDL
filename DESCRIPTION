@@ -1,4 +1,4 @@
-Package: r10xDeepLearning
+Package: r10xDL
 Title: Analyzes 10X Genomics Data to Correlate GEX Data to Flow Data
 Version: 0.0.0.9000
 Authors@R: person("Alex", "Nghiem", email = "alexandernghiem@gmail.com", role = c("aut", "cre"))

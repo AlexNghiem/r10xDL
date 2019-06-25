@@ -1,0 +1,81 @@
+---
+title: "DL Papers"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<style>
+
+.title {
+  font-size: 20px
+}
+
+
+</style>
+
+<h3><a href="https://www.nature.com/articles/s41576-019-0122-6?platform=hootsuite">Eraslan DL Method Review 2019</a></h3>
+<p style = "font-size: 18px">Types of Predictive Model</p>
+<ul>
+  <li><strong>Neural Net:</strong> (input nodes connected to output nodes via a network; weights are trained using data)</li>
+    <ul>
+      <li>Strengths</li>
+      <li>Weaknesses</li>
+        <ul>
+          <li>Difficult to understand intuitively</li>
+        </ul>
+      <li>Types (Types are characterized by which parameters in the neural net are assumed to be the same, ie which dimensions can be reduced in the problem)</li>
+      <ul>
+        <li><strong>Fully Connected</strong></li>
+        <li><strong>Convolutional Neural Net (CNN)</strong></li>
+          <ul>
+            <li>Applies the same function multiple times over the input space. Seems only applicable when there is some underlying structure that this can take advantage of (ie a 6 base pair sliding window).This usually (?) transforms the entire input space into a similar-dimensional space</li>
+          </ul>
+        <li><strong>Recurrent (RNN)</strong></li>
+          <ul>
+            <li>Similar to CNN, RNN uses invariant processes. It slides across elements, and can utilize memory in its calculations. This can probably get very complicated, and because it is sequential it cannot be parallelized at all. Therefore it is slower than CNN, and it has been shown to generally perform worse overall than CNN</li>
+          </ul>
+        <li><strong>Graph Convolutional Network (GCN)</strong></li>
+          <ul>
+            <li>Not sure I understand this fully. GCN's take an input graph (where nodes have features and edges are weighted) and apply various graph transformations. Particularly suited to analyzing interactions between inputs, ie protein-protein interaction to determine protein function</li>
+          </ul>
+      </ul>
+    </ul>
+  <li><strong>Decision Tree:</strong> (nodes are questions, and answers point down the tree towards output leaves; trained with greedy binary splitting</li>
+    <ul>
+      <li>Strengths</li>
+        <ul>
+          <li>Easy to use and understand intuitively</li>
+          <li>(Personal Hypothesis: Might be good when the input space can be well fragmented into different classes)</li>
+        </ul>
+      <li>Weaknesses</li>
+        <ul>
+          <li>Doesn't work well with continuous data</li>
+          <li>May require pruning (otherwise too large)</li>
+        </ul>
+      <li>Types</li>
+        <ul>
+          <li>Gradient Boosted Decision Tree: Not sure exactly, it seems like an interative model where further trees are created based on the residuals of the original tree. I don't see how this differs from just continuing to train the original tree, but apparently it leads to significantly boosted performance (at the cost of complexity/computation time..? not sure) </li>
+        </ul>
+    </ul>
+</ul>
+
+<p style = "font-size: 18px">Misc Info</p>
+<ul>
+  <li>Scoring Importance Features (finding which input nodes have greatest effect on output nodes)</li>
+    <ul>
+      <li><strong>Perturbance Testing:</strong> For every input node, test the effect of a small perturbation. This is computationally expensive, and has various problems dealing with saturation (some input nodes only matter in certain cases)</li>
+      <li><strong>Backpropagation:</strong> Start at the output, and compute how each node in the previous layer affects that output. Then continue backpropagating until the first layer. This is computationally cheap and is not strictly less effective</li>
+    </ul>
+</ul>
+
+<p style = "font-size: 18px">Key Takeaways</p>
+<ul>
+  <li>Neural Nets are great for spatial data (when the data has some sort of order, such as DNA sequences), whereas Decision trees might be better for unordered data (lists of cell features, such as protein counts or mRNA counts). Therefore perhaps the mRNA -> protein problem may be better solved by a decision tree</li>
+  <li>Instead of just throwing everything into a neural network, we should consider early integration of features to reduce parameter-space dimensionality. As well as being much faster to train, this may also lend strength to the system as it will be less susceptible to overfitting. We would just need to be careful to do this integration so as not to lose any potential relationships.</li>
+</ul>
+<img src="Eraslan Macro Model Figure.png" alt = "Eraslan Macro Model Figure" style = "max-width:50%; max-height:50%;"/>
+<br>
+Note: Transfer learning could be nice here -- we use mRNA to predict protein expression, then use the already-sorta-solved protein to cell-type model to predict cell type from mRNA. This is nice because we will be more likely to reverse engineer any mistakes in the network.
