@@ -1,0 +1,118 @@
+---
+title: "DeepLearningFirst"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(BiocManager)
+library(SingleCellExperiment)
+library(purrr)
+library(DropletUtils)
+library(keras)
+library(scran)
+library(scater)
+library(r10xDL)
+library(umap)
+```
+
+Here we will be doing a quick foray into deep learning using the 10X genomics data published in June 2019. This data tracks around 150,000 cells across 4 different donors. For each cell, the data specify gene expression data, protein expression data, and antigen specificity data.
+
+Broadly, our goal is to create a machine learning approach to predict protein expression from gene expression data. We have a lot of data here to work with, but it is not clear which machine learning approach will best be able to do this job. Questions include:
+
+* Why is this useful?
+* Has this been done before?
+* Which type of basic architecture is best: Trees, Neural Nets, GANs?
+* What kind of parameters do we want to consider (depending on architecture)?
+* How transferable is the model from one individual to another individual?
+* Can this be done in an accurate way?
+* Can this be done in an efficient way?
+
+For now, we will just proceed with a neural net, 3 layers deep, just for testing.
+
+### Cut up the data
+```{r processing}
+trainingSize = 10000 #how many cells to train on
+testingSize = 2000 #how many cells to test on
+SCE <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5") ##55206 cells
+
+trainingSCE <- SCE[,1:trainingSize] #takes the first however many cells as training data
+testingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)] #takes the next however many cells as testing data
+
+
+
+trainingData <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"] %>%
+  SCEtoMatrix(.,transpose = TRUE)
+trainingLabels <- trainingSCE[rowData(trainingSCE)$ID == "CD45RA"] %>%
+  SCEtoMatrix(.,transpose = TRUE)
+
+testingData <- testingSCE[rowData(testingSCE)$Type == "Gene Expression"] %>%
+  SCEtoMatrix(.,transpose = TRUE)
+testingLabels <- testingSCE[rowData(testingSCE)$ID == "CD45RA"] %>%
+  SCEtoMatrix(.,transpose = TRUE)
+```
+
+### Clean out zero genes and normalize the data
+```{r normalize}
+#sce <- calculateQCMetrics(sce, BPPARAM = BiocParallel::MulticoreParam())
+
+
+```
+
+```{r buildModel}
+buildModel <- function() {
+  model <- keras_model_sequential() %>%
+    layer_dense(units = 4, activation = "relu",
+                input_shape = dim(trainingData)[2]) %>%
+    layer_dense(units = 1)
+
+  model %>% compile(
+    loss = "mse",
+    optimizer = optimizer_rmsprop(),
+    metrics = list("mean_absolute_error")
+  )
+
+  model
+}
+
+model <- buildModel()
+model %>% summary()
+
+# Display training progress by printing a single dot for each completed epoch.
+print_dot_callback <- callback_lambda(
+  on_epoch_end = function(epoch, logs) {
+    if (epoch %% 80 == 0) cat("\n", (Sys.time() - start))
+    cat(".")
+  }
+)    
+epochs <- 50
+```
+
+```{r trainModel, results = 'hide'}
+# Fit the model and store training stats
+start <- Sys.time()
+history <- model %>% fit(
+  trainingData,
+  trainingLabels,
+  epochs = epochs,
+  validation_split = 0.2,
+  verbose = 0,
+  callbacks = list(print_dot_callback)
+)
+
+g <- plot(history, metrics = "mean_absolute_error", smooth = FALSE)
+```
+
+```{r graph, echo = FALSE}
+g
+```
+
+
+
+```{r predict}
+predictions <- predict(model, testingData)
+```
+
+
+
+

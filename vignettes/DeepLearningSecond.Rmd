@@ -1,5 +1,5 @@
 ---
-title: "DeepLearning"
+title: "DeepLearningSecond"
 output: html_document
 ---
 
@@ -39,6 +39,8 @@ SCE <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_ma
 trainingSCE <- SCE[,1:trainingSize] #takes the first however many cells as training data
 testingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)] #takes the next however many cells as testing data
 
+
+
 trainingData <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"] %>%
   SCEtoMatrix(.,transpose = TRUE)
 trainingLabels <- trainingSCE[rowData(trainingSCE)$ID == "CD45RA"] %>%
@@ -52,7 +54,7 @@ testingLabels <- testingSCE[rowData(testingSCE)$ID == "CD45RA"] %>%
 
 ### Clean out zero genes and normalize the data
 ```{r normalize}
-sce <- calculateQCMetrics(sce, BPPARAM = BiocParallel::MulticoreParam())
+#sce <- calculateQCMetrics(sce, BPPARAM = BiocParallel::MulticoreParam())
 
 
 ```
