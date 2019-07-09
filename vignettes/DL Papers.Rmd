@@ -79,3 +79,16 @@ knitr::opts_chunk$set(echo = TRUE)
 <img src="Eraslan Macro Model Figure.png" alt = "Eraslan Macro Model Figure" style = "max-width:50%; max-height:50%;"/>
 <br>
 Note: Transfer learning could be nice here -- we use mRNA to predict protein expression, then use the already-sorta-solved protein to cell-type model to predict cell type from mRNA. This is nice because we will be more likely to reverse engineer any mistakes in the network.
+
+<h3><a href="https://www.nature.com/articles/s41592-018-0230-9">Bayesian deep learning for SC analysis</a></h3>
+<ul>
+  <li>scVI is a good new multipurpose tool for analyzing scRNA-seq data</li>
+  <li>It contains inherent bias through both underlying structure and hyperparameters</li>
+</ul
+
+<h3><a href="https://www.nature.com/articles/s41467-018-07931-2">Single-cell RNA-seq denoising using a deep count autoencoder</a></h3>
+<ul>
+  <li>The non-trivial distinction between true and false zeros means that traditional statistical imputation methods are not suitable to scRNAseq data in general.
+  <li>
+</ul>
+

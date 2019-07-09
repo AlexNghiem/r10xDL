@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>A Test Function — test_function_add_one • r10xDL</title>
+<title>Cleans a SCE to remove all cells with zero libraries — cleanSCE • r10xDL</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="A Test Function — test_function_add_one" />
+<meta property="og:title" content="Cleans a SCE to remove all cells with zero libraries — cleanSCE" />
 
-<meta property="og:description" content="This function adds one to a number." />
+<meta property="og:description" content="This function takes an SCE, removes all cells which have no library (no non-zero entries in its column), and returns the SCE. Used to clean the SCE for later processing" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -121,39 +121,35 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>A Test Function</h1>
+    <h1>Cleans a SCE to remove all cells with zero libraries</h1>
     
-    <div class="hidden name"><code>test_function_add_one.Rd</code></div>
+    <div class="hidden name"><code>cleanSCE.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>This function adds one to a number.</p>
+    <p>This function takes an SCE, removes all cells which have no library (no non-zero entries in its column), and returns the SCE. Used to clean the SCE for later processing</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>test_function_add_one</span>(<span class='kw'>number</span> <span class='kw'>=</span> <span class='fl'>7</span>)</pre>
+    <pre class="usage"><span class='fu'>cleanSCE</span>(<span class='no'>sce</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>number</th>
-      <td><p>The number to add 1 to. Defaults to 7</p></td>
+      <th>sce</th>
+      <td><p>the sce to clean</p></td>
     </tr>
     </table>
     
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>test_function_add_one</span>()</div><div class='output co'>#&gt; [1] 8</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-            
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+                </ul>
 
   </div>
 </div>

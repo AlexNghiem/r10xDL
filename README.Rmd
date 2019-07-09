@@ -8,3 +8,4 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## README
+options(pkgdown.internet = TRUE) in order to keep the original settings. I had to turn this to false in order to get the pkgdown to compile

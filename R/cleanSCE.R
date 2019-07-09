@@ -4,8 +4,6 @@
 #' @param sce the sce to clean
 #' @keywords sce clean
 #' @export
-#' @examples
-#' cleanSCE()
 
 cleanSCE <- function(sce) {
   helper <- function(i) {

@@ -1,0 +1,146 @@
+---
+title: "TensorFlow example"
+output: html_document
+---
+
+## Overview
+Here is an example from Keras, to see the original check this [link to the tutorial](https://tensorflow.rstudio.com/keras/articles/tutorial_basic_regression.html). It goes through a data set with ~500 samples, and attempts to predict one continuous variable from the other 13 variables.  
+
+### Covered are:  
+* How to prep data
+* How to build a model
+* How to set custom run-time preferences (what to print during run)
+* How to test model
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r installation, echo = TRUE, eval=TRUE}
+#devtools::install_github("rstudio/keras")
+library(keras)
+#install_keras()
+library(tibble)
+library(ggplot2)
+```
+
+### Key Notes
+* we want to do feature normalization
+* we have to build the model carefully
+* training can be pretty fast
+* we want to stop the program once the accuracy peaks to prevent overfitting
+
+```{r prepData, echo = TRUE, eval = TRUE}
+#https://tensorflow.rstudio.com/keras/articles/tutorial_basic_regression.html
+boston_housing <- dataset_boston_housing()
+
+c(train_data, train_labels) %<-% boston_housing$train # we want the input data in a separate matrix as the output variable (for our case, we probably want one matrix of gex data and one of protein data)
+c(test_data, test_labels) %<-% boston_housing$test
+#train_data[1, ] # Display sample features, notice the different scales
+
+
+column_names <- c('CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE','DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT')
+train_df <- as_tibble(train_data) # we might want to use tibble..?
+colnames(train_df) <- column_names
+#train_df
+
+train_data <- scale(train_data) # feature normalization (see keras guide for ?scale)
+
+# Use means and standard deviations from training set to normalize test set
+col_means_train <- attr(train_data, "scaled:center") 
+col_stddevs_train <- attr(train_data, "scaled:scale")
+test_data <- scale(test_data, center = col_means_train, scale = col_stddevs_train)
+
+train_data[1, ] # First training sample, normalized
+
+```
+
+```{r createModel}
+build_model <- function() {
+  model <- keras_model_sequential() %>%
+    layer_dense(units = 64, activation = "relu",
+                input_shape = dim(train_data)[2]) %>%
+    layer_dense(units = 64, activation = "relu") %>%
+    layer_dense(units = 1)
+
+  model %>% compile(
+    loss = "mse",
+    optimizer = optimizer_rmsprop(),
+    metrics = list("mean_absolute_error")
+  )
+
+  model
+}
+
+model <- build_model()
+model %>% summary()
+
+# Display training progress by printing a single dot for each completed epoch.
+print_dot_callback <- callback_lambda(
+  on_epoch_end = function(epoch, logs) {
+    if (epoch %% 80 == 0) cat("\n")
+    cat(".")
+  }
+)    
+epochs <- 500
+```
+
+```{r train, results = 'hide'}
+# Fit the model and store training stats
+history <- model %>% fit(
+  train_data,
+  train_labels,
+  epochs = epochs,
+  validation_split = 0.2,
+  verbose = 0,
+  callbacks = list(print_dot_callback)
+)
+
+g <- plot(history, metrics = "mean_absolute_error", smooth = FALSE) + coord_cartesian(ylim = c(0, 5))
+```
+
+```{r graph, echo = FALSE}
+g
+```
+
+``` {r evaluationAndPrediction1}
+c(loss, mae) %<-% (model %>% evaluate(test_data, test_labels, verbose = 0))
+
+paste0("Mean absolute error on test set: $", sprintf("%.2f", mae * 1000))
+
+test_predictions <- model %>% predict(test_data)
+test_predictions[ , 1]
+```
+
+Now we will create a better model which is capable of stopping itself when it fails to improve the fit significantly. This helps to prevent overfitting.
+```{r createModel2, results = 'hide'}
+# The patience parameter is the amount of epochs to check for improvement.
+early_stop <- callback_early_stopping(monitor = "val_loss", patience = 50)
+
+model <- build_model()
+history <- model %>% fit(
+  train_data,
+  train_labels,
+  epochs = epochs,
+  validation_split = 0.2,
+  verbose = 0,
+  callbacks = list(early_stop, print_dot_callback)
+)
+
+g <- plot(history, metrics = "mean_absolute_error", smooth = FALSE) + coord_cartesian(ylim = c(0, 5))
+```
+
+```{r graph2, echo = FALSE}
+g
+```
+
+``` {r evaluationAndPrediction}
+c(loss, mae) %<-% (model %>% evaluate(test_data, test_labels, verbose = 0))
+
+paste0("Mean absolute error on test set: $", sprintf("%.2f", mae * 1000))
+
+test_predictions <- model %>% predict(test_data)
+test_predictions[ , 1]
+```
+
+

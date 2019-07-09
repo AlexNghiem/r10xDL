@@ -12,8 +12,5 @@ cleanSCE(sce)
 \description{
 This function takes an SCE, removes all cells which have no library (no non-zero entries in its column), and returns the SCE. Used to clean the SCE for later processing
 }
-\examples{
-cleanSCE()
-}
 \keyword{clean}
 \keyword{sce}

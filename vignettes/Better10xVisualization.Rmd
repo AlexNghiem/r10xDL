@@ -1,0 +1,111 @@
+---
+title: "Better10xVisualization"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(BiocManager)
+library(SingleCellExperiment)
+library(purrr)
+library(DropletUtils)
+library(keras)
+library(scran)
+library(scater)
+library(r10xDL)
+library(umap)
+```
+
+## Introduction
+
+In this vignette I will analyze a part of the CD8+ T cell data set from 10X Genomics. This data is available through [this link](https://support.10xgenomics.com/single-cell-vdj/datasets). It tracks cells from 4 different healthy donors, each of which contributes several tens of thousand cells to the data set. For each cell, the data set contains data regarding gene expression, protein expression, and antigen specificity.  
+
+This vignette will focus on a very small subset of the data: protein expression data from a sample of the first donor's cells. We will read in the data, subset it, visualize it, and analyze it.  
+
+This vignette requires the following packages: BiocManager, SingleCellExperiment, purrr, DropletUtils, umap.
+
+### Reading data
+
+After downloading the data, we can run the following. This method, available through the package DropletUtils, reads in an h5 file and returns a SingleCellExperiment object.
+
+```{r reading}
+sce <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5") #this file can be downloaded from the 10x site linked above
+```
+
+## Preprocessing data
+
+We then want to subset this data down from its original number of cells, 55602. 
+
+At this point we also convert the counts 
+
+```{r subsetting}
+subsetSize <- 1000
+sce <- sce[, 1:subsetSize] #subsets to the first subsetSize cells in the object
+#counts(sce) <- as.matrix(counts(sce))
+```
+
+We can then break the data down into its two components, Gene Expression data and Antibody Capture data and store them.
+
+```{r preprocessing}
+gex <- sce[rowData(sce)$Type == "Gene Expression"]
+cite <- sce[rowData(sce)$Type == "Antibody Capture"]
+
+rowData(cite)$ID #this prints a list of our 64 antibody capture counts
+```
+
+Notably, we have 14 protein counts, and 50 dextramer counts. We will focus on the Antibody Capture data, and specifically the protein data over the dextramer count data.
+
+## Running and Plotting a UMAP
+
+We will now run a UMAP on the normalized data. We will be running this UMAP only on the protein data, although it is also interesting to run a UMAP on the dextramer count data. 
+
+```{r fullUMAP}
+proteinRows <- 1:14 #this refers to the fact that the first 14 rows of the cite data are protein counts
+
+plot <- cite %>%
+  normalize() %>% #we will log-normalize the antibody capture data
+  runUMAP(feature_set = proteinRows) %>% #only use the 14 proteins for computing the umap
+  plotUMAP #this takes the UMAP data stored by runUMAP and converts it to a ggplot object
+```
+
+```{r graphBasic, echo = FALSE}
+plot
+```
+
+Although this UMAP seems to have worked, it doesn't really tell us anything. Now we can go through each type of protein and see if any of the regions of the UMAP correspond strongly with certain proteins.
+
+# Modified UMAP graphs
+
+First we will define a function, getGGPlot. The idea is that we can specify a protein (as its integer row) and it will return a UMAP plot, where each cell is colored by its expression of that protein.
+
+```{r getGGPlot}
+getGGPlot <- function(pNum) { #pNum is the row number of the protein we want to see
+  citeUMAP <- reducedDim(cite) #manually grab the UMAP data from the SingleCellExperiment object
+    
+    ggplot(data.frame(citeUMAP),  aes(citeUMAP[,1], citeUMAP[,2], colour = logcounts(cite)[pNum,])) + #we want cells colored to their expression of the given protein
+      geom_point() +
+      scale_colour_gradientn(colours = rainbow(4)) +
+      ggtitle(rowData(cite)$ID[pNum])
+}
+```
+
+We will iterate through each protein and graph the results.
+
+```{r createColorPlots}
+lapply(proteinRows, getGGPlot)
+```
+
+We can see that the cells are nicely separated according to CD45RA, CD45RO, CD279_PD-1, IgG1, and IgG2b. We can also see evidence of other more subtle clusterings, such as HLA-DR. 
+
+It seems that a large fraction of the separation that we can see comes directly from the IgG proteins. If we prevent the UMAP from taking these values into account, then we can get a different mapping which is more faithful to the actual important separation in these clusterings.
+
+```{r IgGout}
+#cite <- cite[,logcounts(cite)["IgG2b",] < 2]
+cite <- runUMAP(cite, feature_set = c(1:8,12:14)) #only use the 14 proteins for computing the umap
+```
+
+```{r createColorPlots2}
+lapply(proteinRows, getGGPlot)
+```
+
+

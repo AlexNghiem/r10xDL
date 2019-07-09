@@ -1,0 +1,27 @@
+---
+title: "Keras Guide"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Types of layers
+
+* Densely Connected - same as fully connected, every node in the layer is connected to every node from the previous layer
+* Convolutional - 
+
+# Functions
+
+* scale(x = [matrix]) - scales a matrix. This essentially goes column by column performing the steps: (1) center the data so that the sum of the column is 0 (2) scale the data by the standard deviation of the column. 
+* attr(, "scaled:center") - finds the mean of the vector
+* attr(, "scaled:scale") - finds the standard deviation
+
+
+* RMSprop (Root Mean Square prop) - speeds up gradient descent, by essentially taking the average movement of the descent vector and scaling descent by that. this has the effect of speeding up slow convergence and slowing down fast convergence, in other words making it faster to converge in slow learning dimensions and less likely to diverge in fast learning dimensions.
+* Gradient Descent with Momentum - 
+
+
+
+
