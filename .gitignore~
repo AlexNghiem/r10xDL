@@ -1,6 +1,5 @@
 # My own stuff to ignore:
 
-# the huge 10x data file:s
 vignettes/10Xdata/
 
 
