@@ -52,17 +52,9 @@ testingLabels <- testingSCE[rowData(testingSCE)$ID == "CD45RA"] %>%
 
 ### Clean out zero genes and normalize the data
 ```{r normalize}
-#nonZeros <- apply(trainingData, MARGIN = 2, FUN = function(x) {any(x != 0)})
-#testingData <- testingData[, any(trainingData != 0)]
-#trainingData <- trainingData[, any(trainingData != 0)]
+sce <- calculateQCMetrics(sce, BPPARAM = BiocParallel::MulticoreParam())
 
-#normalize training data
-trainingData <- scale(trainingData) #same as scale(train_data, center = trainColMean, scale = trainColStddev)
 
-#normalize testing data using the training data
-trainColMean <- attr(trainingData, "scaled:center") #gets mean
-trainColStddev <- attr(trainingData, "scaled:scale") #gets stddev
-testingData <- scale(testingData, center = trainColMean, scale = trainColStddev)
 ```
 
 ```{r buildModel}
