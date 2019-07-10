@@ -39,6 +39,7 @@ SCE <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_ma
 trainingSCE <- SCE[,1:trainingSize] #takes the first however many cells as training data
 testingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)] #takes the next however many cells as testing data
 
+trainingSCE <- 
 ```
 
 ```{r clean SCEs}
@@ -77,6 +78,12 @@ trainingSCE <- normalize(trainingSCE)
 testingSCE <- normalize(testingSCE)
 ```
 
+```{r featureSelect}
+fit <- trendVar(trainingSCE, use.spikes = FALSE)
+dec <- decomposeVar(trainingSCE, fit)
+hvg <- dec$bio > 0 # save vector of genes
+```
+
 ```{r separate}
 trainingData <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"] %>%
   SCEtoMatrix(.,transpose = TRUE)
@@ -112,7 +119,7 @@ model %>% summary()
 # Display training progress by printing a single dot for each completed epoch.
 print_dot_callback <- callback_lambda(
   on_epoch_end = function(epoch, logs) {
-    if (epoch %% 80 == 0) cat("\n", (Sys.time() - start))
+    if (epoch %% 80 == 0) cat("\n")
     cat(".")
   }
 )    

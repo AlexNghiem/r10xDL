@@ -17,6 +17,8 @@ SCEtoMatrix(sce, rowList = NULL, colList = NULL, addRowData = TRUE,
 \item{addRowData}{logical. Should the function add the original rowdata from the matrix. Defaults to TRUE}
 
 \item{addColData}{logical. Should the function add the original coldata from the matrix. Defaults to TRUE}
+
+\item{transpose}{whether to tranpose the matrix before returning}
 }
 \description{
 This function takes an SCE and returns its counts matrix. It has additional features, such as adding the column/row names to the data, and subsetting the matrix automatically.
