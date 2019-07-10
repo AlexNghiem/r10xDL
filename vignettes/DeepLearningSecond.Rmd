@@ -39,7 +39,13 @@ SCE <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_ma
 trainingSCE <- SCE[,1:trainingSize] #takes the first however many cells as training data
 testingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)] #takes the next however many cells as testing data
 
-trainingSCE <- 
+trainingLabels <- trainingSCE[rowData(trainingSCE)$ID == "CD45RA"] %>%
+  SCEtoMatrix(.,transpose = TRUE)
+trainingSCE <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"]
+
+testingLabels <- testingSCE[rowData(testingSCE)$ID == "CD45RA"] %>%
+  SCEtoMatrix(.,transpose = TRUE)
+testingSCE <- testingSCE[rowData(testingSCE)$Type == "Gene Expression"]
 ```
 
 ```{r clean SCEs}
@@ -82,18 +88,13 @@ testingSCE <- normalize(testingSCE)
 fit <- trendVar(trainingSCE, use.spikes = FALSE)
 dec <- decomposeVar(trainingSCE, fit)
 hvg <- dec$bio > 0 # save vector of genes
+trainingSCE <- trainingSCE[hvg,]
+testingSCE <- testingSCE[hvg,]
 ```
 
 ```{r separate}
-trainingData <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"] %>%
-  SCEtoMatrix(.,transpose = TRUE)
-trainingLabels <- trainingSCE[rowData(trainingSCE)$ID == "CD45RA"] %>%
-  SCEtoMatrix(.,transpose = TRUE)
-
-testingData <- testingSCE[rowData(testingSCE)$Type == "Gene Expression"] %>%
-  SCEtoMatrix(.,transpose = TRUE)
-testingLabels <- testingSCE[rowData(testingSCE)$ID == "CD45RA"] %>%
-  SCEtoMatrix(.,transpose = TRUE)
+trainingData <- SCEtoMatrix(trainingSCE,transpose = TRUE)
+testingData <-  SCEtoMatrix(testingSCE,transpose = TRUE)
 ```
 
 ```{r buildModel}
