@@ -3,8 +3,8 @@
 # the huge 10x data file:
 vignettes/10Xdata/
 
-
-
+# DS_Store
+.DS_Store
 
 # VV FROM TEMPLATE ROB GAVE ME VV
 
