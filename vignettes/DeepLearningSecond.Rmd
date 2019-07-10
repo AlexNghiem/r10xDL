@@ -40,7 +40,6 @@ trainingSCE <- SCE[,1:trainingSize] #takes the first however many cells as train
 testingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)] #takes the next however many cells as testing data
 
 
-
 trainingData <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"] %>%
   SCEtoMatrix(.,transpose = TRUE)
 trainingLabels <- trainingSCE[rowData(trainingSCE)$ID == "CD45RA"] %>%
