@@ -33,76 +33,98 @@ For now, we will just proceed with a basic neural net.
 ### Cut up the data
 ```{r reading}
 trainingSize = 10000 #how many cells to train on
-testingSize = 2000 #how many cells to test on
-SCE <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5") ##55206 cells
+testingSize = 500 #how many cells to test on
+SCE <- read10xCounts("vignettes/10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5") ##55206 cells
 
-trainingSCE <- SCE[,1:trainingSize] #takes the first however many cells as training data
-testingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)] #takes the next however many cells as testing data
+geneTrainingSCE <- SCE[,1:trainingSize] #takes the first however many cells as training data
+geneTestingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)] #takes the next however many cells as testing data
 
-trainingLabels <- trainingSCE[rowData(trainingSCE)$ID == "CD45RA"] %>%
-  SCEtoMatrix(.,transpose = TRUE)
-trainingSCE <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"]
+proteinGREP <- "CD.*|Ig.*|HLA-DR"
+proteinList <- grep(proteinGREP, rowData(geneTrainingSCE)$ID)
 
-testingLabels <- testingSCE[rowData(testingSCE)$ID == "CD45RA"] %>%
-  SCEtoMatrix(.,transpose = TRUE)
-testingSCE <- testingSCE[rowData(testingSCE)$Type == "Gene Expression"]
+library(compositions)
+proteinTrainingData <- geneTrainingSCE[proteinList] %>%
+  counts() %>%
+  as.matrix() %>%
+  t() %>%
+  clr()
+
+trainingLabels <- proteinTrainingData[,colnames(proteinTrainingData) == "CD45RA"]
+
+#testing
+proteinTestingData <- geneTestingSCE[proteinList] %>%
+  counts() %>%
+  as.matrix() %>%
+  t() %>%
+  clr()
+testingLabels <- proteinTestingData[,colnames(proteinTestingData) == "CD45RA"]
+
+geneTrainingSCE <- geneTrainingSCE[rowData(geneTrainingSCE)$Type == "Gene Expression"]
+
+testingLabels <- geneTestingSCE[rowData(geneTestingSCE)$ID == "CD45RA"] %>%
+  counts() %>%
+  as.matrix() %>%
+  t()
+geneTestingSCE <- geneTestingSCE[rowData(geneTestingSCE)$Type == "Gene Expression"]
 ```
 
 ```{r clean SCEs}
 cellFilter <- function(x) {
   #Convert counts matrix
   counts(x) <- as.matrix(counts(x))
-  
-  library(scater)
-  x <- calculateQCMetrics(x, BPPARAM = BiocParallel::MulticoreParam())
-  
-  #filter out low quality cells from the SCE
-  filt <- x$total_counts > 500 & x$total_features_by_counts > 100
-  x <- x[, filt]
+  x
+  # x <- calculateQCMetrics(x, BPPARAM = BiocParallel::MulticoreParam())
+  # 
+  # #filter out low quality cells from the SCE
+  # filt <- x$total_counts > 500 & x$total_features_by_counts > 100
+  # x <- x[, filt]
 }
 
-trainingSCE <- cellFilter(trainingSCE)
-testingSCE <- cellFilter(testingSCE)
+library(scater)
+
+geneTrainingSCE <- cellFilter(geneTrainingSCE)
+geneTestingSCE <- cellFilter(geneTestingSCE)
 
 #remove low frequency genes from the SCE (keep those with 1 read in at least 5% of cells)
 min_reads <- 1
-min_cells <- 0.05 * ncol(trainingSCE) 
+min_cells <- 0.05 * ncol(geneTrainingSCE) 
 #calculate a boolean vector for which genes to keep
-keep <- rowSums(counts(trainingSCE) >= min_reads) >= min_cells
+keep <- rowSums(counts(geneTrainingSCE) >= min_reads) >= min_cells
 #subset both SCEs using this vector
-trainingSCE <- trainingSCE[keep, ]
-testingSCE <- testingSCE[keep, ]
+geneTrainingSCE <- geneTrainingSCE[keep, ]
+geneTestingSCE <- geneTestingSCE[keep, ]
 
 #for readability, swap rownames from row ID to row symbol
 #this may cause problems later
-featureNames <- uniquifyFeatureNames(ID = rowData(trainingSCE)$ID, names = rowData(trainingSCE)$Symbol)
-rownames(trainingSCE) <- featureNames
-rownames(testingSCE) <- featureNames
+featureNames <- uniquifyFeatureNames(ID = rowData(geneTrainingSCE)$ID, names = rowData(geneTrainingSCE)$Symbol)
+rownames(geneTrainingSCE) <- featureNames
+rownames(geneTestingSCE) <- featureNames
 
 #normalize
-trainingSCE <- normalize(trainingSCE)
-testingSCE <- normalize(testingSCE)
+geneTrainingSCE <- normalize(geneTrainingSCE)
+geneTestingSCE <- normalize(geneTestingSCE)
 ```
 
 ```{r featureSelect}
-fit <- trendVar(trainingSCE, use.spikes = FALSE)
-dec <- decomposeVar(trainingSCE, fit)
+fit <- trendVar(geneTrainingSCE, use.spikes = FALSE)
+dec <- decomposeVar(geneTrainingSCE, fit)
 hvg <- dec$bio > 0 # save vector of genes
-trainingSCE <- trainingSCE[hvg,]
-testingSCE <- testingSCE[hvg,]
+geneTrainingSCE <- geneTrainingSCE[hvg,]
+geneTestingSCE <- geneTestingSCE[hvg,]
 ```
 
 ```{r separate}
-trainingData <- SCEtoMatrix(trainingSCE,transpose = TRUE)
-testingData <-  SCEtoMatrix(testingSCE,transpose = TRUE)
+trainingData <- SCEtoMatrix(geneTrainingSCE,transpose = TRUE)
+testingData <- SCEtoMatrix(geneTestingSCE,transpose = TRUE)
 ```
 
 ```{r buildModel}
 buildModel <- function() {
   model <- keras_model_sequential() %>%
-    layer_dense(units = 16, activation = "relu",
-                input_shape = dim(trainingData)[2]) %>%
-    layer_dense(units = 4) %>%
+    layer_dropout(rate = .3, input_shape = dim(trainingData)[2]) %>%
+    layer_dense(units = 4, activation = "relu") %>%
+    layer_dense(units = 4, activation = "relu") %>%
+    layer_dense(units = 2, activation = "relu") %>%
     layer_dense(units = 1)
 
   model %>% compile(
@@ -124,15 +146,17 @@ print_dot_callback <- callback_lambda(
     cat(".")
   }
 )    
-epochs <- 50
+epochs <- 80
+batch_size <- 200
+
 ```
 
 ```{r trainModel, results = 'hide'}
 # Fit the model and store training stats
-start <- Sys.time()
 history <- model %>% fit(
   trainingData,
   trainingLabels,
+  batch_size = batch_size,
   epochs = epochs,
   validation_split = 0.2,
   verbose = 0,
@@ -144,14 +168,9 @@ g <- plot(history, metrics = "mean_absolute_error", smooth = FALSE)
 
 ```{r graph, echo = FALSE}
 g
+qplot(testingLabels, predict(model, testingData))
+cor(testingLabels, predict(model, testingData))
 ```
-
-
-
-```{r predict}
-predictions <- predict(model, testingData)
-```
-
 
 
 
