@@ -1,0 +1,97 @@
+
+> # Here I will benchmark various different hyperparameters and architectures.
+> 
+> library(keras)
+
+> FLAGS <- flags(
++   flag_integer("dense_units1", 8),
++   flag_numeric("dropout1", 0.3),
++   flag_string("activation1", 'relu'),
++   
++   flag_intege .... [TRUNCATED] 
+
+> inputs <- layer_input(shape = c(dim(trainingData)[2]))
+
+> output0 <- inputs %>%
++   layer_dropout(rate = FLAGS$dropout1) %>%
++   layer_dense(units = FLAGS$dense_units1, activation = eval(FLAGS$activation1)) .... [TRUNCATED] 
+
+> makeOutputLayer <- function(x) {
++   layer_dense(output0, units=1, name= colnames(trainingLabels)[x])
++ }
+
+> outputs <- lapply(1:dim(trainingLabels)[2], makeOutputLayer)
+
+> model <- keras_model(inputs=inputs, outputs=outputs)
+
+> model %>% compile(
++   loss = "mse",
++   optimizer = optimizer_rmsprop(lr = FLAGS$learning_rate),
++   metrics = list("mean_absolute_error"),
++   #lo .... [TRUNCATED] 
+
+> model %>% summary()
+________________________________________________________________________________
+Layer (type)              Output Shape      Param #  Connected to               
+================================================================================
+input_13 (InputLayer)     (None, 2986)      0                                   
+________________________________________________________________________________
+dropout_48 (Dropout)      (None, 2986)      0        input_13[0][0]             
+________________________________________________________________________________
+dense_48 (Dense)          (None, 8)         23896    dropout_48[0][0]           
+________________________________________________________________________________
+dropout_49 (Dropout)      (None, 8)         0        dense_48[0][0]             
+________________________________________________________________________________
+dense_49 (Dense)          (None, 4)         36       dropout_49[0][0]           
+________________________________________________________________________________
+dropout_50 (Dropout)      (None, 4)         0        dense_49[0][0]             
+________________________________________________________________________________
+dense_50 (Dense)          (None, 2)         10       dropout_50[0][0]           
+________________________________________________________________________________
+dropout_51 (Dropout)      (None, 2)         0        dense_50[0][0]             
+________________________________________________________________________________
+dense_51 (Dense)          (None, 4)         12       dropout_51[0][0]           
+________________________________________________________________________________
+CD3 (Dense)               (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD19 (Dense)              (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD45RA (Dense)            (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD4 (Dense)               (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD8a (Dense)              (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD14 (Dense)              (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD45RO (Dense)            (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD279_PD_1 (Dense)        (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+IgG1 (Dense)              (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+IgG2a (Dense)             (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+IgG2b (Dense)             (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD127 (Dense)             (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+CD197_CCR7 (Dense)        (None, 1)         5        dense_51[0][0]             
+________________________________________________________________________________
+HLA_DR (Dense)            (None, 1)         5        dense_51[0][0]             
+================================================================================
+Total params: 24,024
+Trainable params: 24,024
+Non-trainable params: 0
+________________________________________________________________________________
+
+> # Display training progress by printing a single dot for each completed epoch.
+> print_dot_callback <- callback_lambda(
++   on_epoch_end = function( .... [TRUNCATED] 
+
+> history <- model %>% fit(
++   x = trainingData,
++   y = lapply(1:dim(trainingLabels)[2], function(x) {trainingLabels[,x]}),
++   batch_size = FLAGS$b .... [TRUNCATED] 
+
+..................................................
