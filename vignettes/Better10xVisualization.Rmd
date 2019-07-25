@@ -61,11 +61,9 @@ We will now run a UMAP on the normalized data. We will be running this UMAP only
 
 ```{r fullUMAP}
 proteinRows <- 1:14 #this refers to the fact that the first 14 rows of the cite data are protein counts
-
-plot <- cite %>%
-  normalize() %>% #we will log-normalize the antibody capture data
-  runUMAP(feature_set = proteinRows) %>% #only use the 14 proteins for computing the umap
-  plotUMAP #this takes the UMAP data stored by runUMAP and converts it to a ggplot object
+cite <- normalize(cite) #we will log-normalize the antibody capture data
+cite <- runUMAP(cite, feature_set = proteinRows) #only use the 14 proteins for computing the umap
+plot <- plotUMAP(cite) #this takes the UMAP data stored by runUMAP and converts it to a ggplot object
 ```
 
 ```{r graphBasic, echo = FALSE}
@@ -84,7 +82,7 @@ getGGPlot <- function(pNum) { #pNum is the row number of the protein we want to 
     
     ggplot(data.frame(citeUMAP),  aes(citeUMAP[,1], citeUMAP[,2], colour = logcounts(cite)[pNum,])) + #we want cells colored to their expression of the given protein
       geom_point() +
-      scale_colour_gradientn(colours = rainbow(4)) +
+      scale_colour_gradientn(colours = rainbow(4), name = paste("log of", rowData(cite)$ID[pNum], "expression")) +
       ggtitle(rowData(cite)$ID[pNum])
 }
 ```
@@ -100,7 +98,7 @@ We can see that the cells are nicely separated according to CD45RA, CD45RO, CD27
 It seems that a large fraction of the separation that we can see comes directly from the IgG proteins. If we prevent the UMAP from taking these values into account, then we can get a different mapping which is more faithful to the actual important separation in these clusterings.
 
 ```{r IgGout}
-#cite <- cite[,logcounts(cite)["IgG2b",] < 2]
+cite <- cite[,logcounts(cite)["IgG2b",] < 2]
 cite <- runUMAP(cite, feature_set = c(1:8,12:14)) #only use the 14 proteins for computing the umap
 ```
 

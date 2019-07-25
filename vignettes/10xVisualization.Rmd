@@ -90,7 +90,7 @@ colData(gex1)$agType <- agVector
 We will prep the data by normalizing and running a PCA. Currently I am feeding it GEX data because the antigen data is too small and too sparse to function correctly. 
 
 ```{r graphPrep, echo = TRUE, eval=TRUE}
-sce <- sce #change this
+sce <- sce1 #change this
 #sce <- cleanSCE(sce)
 counts(sce) <- as.matrix(counts(sce)) #turn the matrix from a delayed matrix to a regular matrix so that scran can operate on it
 sce <- scran::computeSumFactors(sce)
