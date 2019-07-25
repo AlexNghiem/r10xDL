@@ -1,4 +1,4 @@
 library(BiocManager)
 library(SingleCellExperiment)
 
-data <- readRDS("")
+data <- readRDS("Preparing2/faustResults.rds")
