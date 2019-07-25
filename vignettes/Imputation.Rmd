@@ -1,0 +1,72 @@
+---
+title: "Imputation"
+date: "June 2019"
+output:
+  pdf_document: default
+  html_document: 
+    self_contained: no
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r bioCSetup, include=FALSE}
+#install.packages("BiocManager")
+#library(BiocManager)
+#BiocManager::install("SingleCellExperiment")
+#library(SingleCellExperiment)
+#BiocManager::install("scRecover")
+```
+
+
+```{r data1, echo = FALSE}
+#set.seed()
+numCellsPop1 <- 100
+numCellsPop2 <- 1
+numMeasuredGenes <- 100
+scalingLPop1 <- runif(numCellsPop1, .3, 1) #creates a scaling for each single cell
+scalingLPop2 <- runif(numCellsPop2, .3, 1)
+avgGeneCountL <- rnbinom(numMeasuredGenes, 10, .8)
+avgGeneCountL1 <- runif(numMeasuredGenes, 1, 10) * avgGeneCountL
+avgGeneCountL2 <- runif(numMeasuredGenes, 1, 10) * avgGeneCountL #sample(1:10, numMeasuredGenes, replace = TRUE)
+
+countsMatrixPop1 <- matrix(floor(runif(numCellsPop1*numMeasuredGenes, 0, 2) * outer(avgGeneCountL1, scalingLPop1)), ncol = numCellsPop1)
+countsMatrixPop2 <- matrix(floor(runif(numCellsPop2*numMeasuredGenes, 0, 2) * outer(avgGeneCountL2, scalingLPop2)), ncol = numCellsPop2)
+countsMatrix <- cbind(countsMatrixPop1, countsMatrixPop2)
+
+rownames(countsMatrix) <- paste0("gene_", 1:numMeasuredGenes)
+colnames(countsMatrix) <- paste0("cell_", 1:(numCellsPop1+numCellsPop2))
+
+sce <- SingleCellExperiment(assays = list(counts = countsMatrix))
+colData(sce) <- DataFrame(cell_type = c(rep("cell_type_1", numCellsPop1), rep("cell_type_2", numCellsPop2)))
+```
+
+```{r plots, echo = FALSE}
+sce <- scran::computeSumFactors(sce)
+sce <- scater::normalize(sce)
+sce <- scater::runPCA(sce)
+#plotReducedDim(sce, use_dimred = "PCA", colour_by = "cell_type")
+```
+
+```{r cleanup, echo = FALSE}
+data(scRecoverTest)
+sce2 <- SingleCellExperiment(assays = list(counts = as.matrix(counts)))
+
+screcovered <- scRecover(counts = sce2, Kcluster = 2, outputDir = "./outDir_scRecover/", verbose = FALSE)
+```
+
+```{r final, echo = FALSE}
+finaldata <- read.csv("./outDir_scRecover/scRecover+scImpute.csv")
+finalmatrix <- data.matrix(finaldata)
+sce3 <- SingleCellExperiment(assays = list(counts = finalmatrix))
+sce3 <- scran::computeSumFactors(sce3)
+sce3 <- scater::normalize(sce3)
+sce3 <- scater::runPCA(sce3)
+plotReducedDim(sce3, use_dimred = "PCA")
+sce2 <- scran::computeSumFactors(sce2)
+sce2 <- scater::normalize(sce2)
+sce2 <- scater::runPCA(sce2)
+plotHeatmap(sce2, features = 1:200)#, colour_columns_by = "cell_type")
+
+plotHeatmap(sce3, features = 1:200)
+```
