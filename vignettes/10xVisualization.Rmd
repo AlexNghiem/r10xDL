@@ -24,17 +24,17 @@ First we will read and subset the data into manageable sizes.
 ```{r loadData, echo = TRUE}
 subsetSize <- 500
 
-sce1 <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5")
+sce1 <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5")
 numRows <- nrow(counts(sce1))
 sce1 <- sce1[1:numRows, 1:subsetSize]
 
-sce2 <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor2_filtered_feature_bc_matrix.h5")
+sce2 <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor2_filtered_feature_bc_matrix.h5")
 sce2 <- sce2[1:numRows, 1:subsetSize]
 
-sce3 <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor3_filtered_feature_bc_matrix.h5")
+sce3 <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor3_filtered_feature_bc_matrix.h5")
 sce3 <- sce3[1:numRows, 1:subsetSize]
 
-sce4 <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor4_filtered_feature_bc_matrix.h5")
+sce4 <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor4_filtered_feature_bc_matrix.h5")
 sce4 <- sce4[1:numRows, 1:subsetSize]
 ```
 

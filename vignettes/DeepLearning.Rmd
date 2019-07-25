@@ -30,7 +30,7 @@ library(DropletUtils)
 library(BiocManager)
 library(SingleCellExperiment)
 ##55206 cells
-SCE <- read10xCounts("10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5")
+SCE <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5")
 
 trainingSize = 10000 #how many cells to train on (this affects speed linearly.. 50000 is optimal)
 testingSize = 5000 #how many cells to test on (this does not affect speed much.. 5000 is plenty)

@@ -5,7 +5,7 @@ library(DropletUtils)
 library(BiocManager)
 library(SingleCellExperiment)
 ##55206 cells
-SCE <- read10xCounts("vignettes/10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5") 
+SCE <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5") 
 
 
 trainingSize = 3000 #how many cells to train on

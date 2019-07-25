@@ -1,6 +1,7 @@
 # My own stuff to ignore:
 
 # the huge 10x data file:
+10Xdata/
 vignettes/10Xdata/
 
 # DS_Store
