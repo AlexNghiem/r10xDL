@@ -1,32 +1,51 @@
-# In this file I will read in the 10X data, process it slightly, and then sit it in memory
-# I will not remove any protein data or gene data without leaving a reference
+#Remove cells with no faust annotation
+#sce <- sce[,!is.na(sce$faustAnnotation)]
 
-library(DropletUtils)
-library(BiocManager)
-library(SingleCellExperiment)
-##55206 cells
-SCE <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5") 
+library(scater)
+library(umap)
+
+sce <- sce[grep("CD.*|IgG.*|HLA-DR", rowData(sce)$ID),]
+
+sce <- scater::normalize(sce)
+sce <- scater::runUMAP(sce)
+sceumap <- umap(t(as.matrix(counts(sce))))
+
+plotUMAP(sce)
 
 
-trainingSize = 30000 #how many cells to train on
-testingSize = 1000 #how many cells to test on
 
-trainingSCE <- SCE[,1:trainingSize] #takes the first however many cells as training data
-testingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)] #takes the next however many cells as testing data
 
-#get AG data matrices
-AGlist <- 33553:33602
-getAGMatrix <- function(x) {
-  x[AGlist] %>%
-    counts() %>%
-    as.matrix() %>%
-    t()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+getGGPlot <- function(pNum) { #pNum is the row number of the protein we want to see
+  sceUMAP <- reducedDim(sce) #manually grab the UMAP data from the SingleCellExperiment object
+  
+  ggplot(data.frame(sceUMAP),  aes(sceUMAP[,1], sceUMAP[,2], colour = logcounts(sce)[pNum,])) + #we want cells colored to their expression of the given protein
+    geom_point() +
+    scale_colour_gradientn(colours = rainbow(4), name = paste("log of", rowData(sce)$ID[pNum], "expression")) +
+    ggtitle(rowData(sce)$ID[pNum])
 }
-library(purrr)
-library(compositions)
-AGTrainingData <- getAGMatrix(trainingSCE)
-AGTestingData <- getAGMatrix(testingSCE)
 
 
-geneTrainingSCE <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"]
-geneTestingSCE <- testingSCE[rowData(testingSCE)$Type == "Gene Expression"]
+getGGPlot <- function(num) { #pNum is the row number of the protein we want to see
+  sceUMAP <- reducedDim(sce[,sce$faustAnnotation==]) #manually grab the UMAP data from the SingleCellExperiment object
+  
+  ggplot(data.frame(sceUMAP),  aes(sceUMAP[,1], sceUMAP[,2])) + #we want cells colored to their expression of the given protein
+    geom_point() +
+    ggtitle(rowData(sce)$ID[class])
+}
+
+lapply(1:14, getGGPlot)
