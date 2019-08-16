@@ -8,10 +8,10 @@ output:
 ```{r setup, include=FALSE}
 library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
-opts_chunk$set(tidy.opts=list(width.cutoff=90),tidy=TRUE)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 ```
 
-Here we will be doing a quick foray into deep learning using the 10X genomics data published in June 2019. This data tracks around 150,000 cells across 4 different donors. For each cell, the data specify gene expression data, protein expression data, and antigen specificity data.
+Here we will be doing a quick foray into deep learning using the 10X genomics data published in June 2019. This data tracks around 230,000 cells across 4 different donors. For each cell, the data specify gene expression data, protein expression data, and antigen specificity data.
 
 Broadly, our goal is to create a machine learning approach to predict protein expression from gene expression data. This model, if it is effective, could be useful for predicting cell type, imputing sparse protein counts, or transferring to different scRNA-seq data sets to generate new protein information. 
 
@@ -19,34 +19,33 @@ We have a lot of data here to work with, but it is not obvious how best to appro
 
 Please note that several hyperparameters have been adjusted to help the vignette run quickly. I will mark these spots with more optimal values.
 
-I will be using BioConductor/SingleCellExperiment to store and process the data, before feeding it into the Keras interface to TensorFlow to build the actual neural network. I will mostly show the best setup I have found, with notes explaining how I tested and made decisions. Occasionally I may demo other setups to show why they don't work as well. With that said, let's dive into the problem.
+I will be using BioConductor/SingleCellExperiment to store and process the data, before feeding it into the Keras interface to TensorFlow to build the actual neural network. I will mostly show the best setup I have found, with notes explaining how I tested and made decisions. With that said, let's dive into the problem.
 
 ## Cut up the data
 
-We will begin with processing and subsetting of the data, to get it into a form that can be fed into Keras.
+We will begin with processing and subsetting of the data, to get it into a form that can be fed into Keras. In this vignette, I work only with the last of the four donors, and therefore only have access to around 36000 cells.
 
 ```{r reading, results = 'hide', message = FALSE}
 library(DropletUtils)
 library(BiocManager)
 library(SingleCellExperiment)
-##55206 cells
-SCE <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor1_filtered_feature_bc_matrix.h5")
+SCE <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor4_filtered_feature_bc_matrix.h5")
 
-trainingSize = 10000 #how many cells to train on (this affects speed linearly.. 50000 is optimal)
-testingSize = 5000 #how many cells to test on (this does not affect speed much.. 5000 is plenty)
+trainingSize = 10000 # how many cells to train on (this affects speed linearly.. 30000 is optimal)
+testingSize = 5000 # how many cells to test on (this does not affect speed much.. 5000 is plenty)
 
-#grab the first cells as training cells, and then the next cells as testing cells
+# grab the first cells as training cells, and then the next cells as testing cells
 geneTrainingSCE <- SCE[,1:trainingSize]
 geneTestingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)]
 
-proteinGREP <- "CD.*|HLA-DR" #this GREP captures the proteins we are interested in from the SCE. Note that this does not include the IgG suite of proteins (these are controls)
-proteinList <- grep(proteinGREP, rowData(geneTrainingSCE)$ID)
-getProteinMatrix <- function(x) { #from an SCE, gets the transposed matrix of proteins
+# this GREP captures the proteins we are interested in from the SCE. Note that this does not include the IgG suite of proteins (these are controls)
+proteinList <- grep("CD.*|HLA-DR", rowData(geneTrainingSCE)$ID)
+getProteinMatrix <- function(x) { # from an SCE, gets the transposed matrix of proteins
   x[proteinList] %>%
     counts() %>%
-    as.matrix() %>% #the data is originally a DelayedMatrix object, so we want to convert that to a regular matrix
+    as.matrix() %>%
     t() %>%
-    clr() #we perform a centered log ratio transform. This is essentially just normalizing the protein counts
+    clr() # we perform a centered log ratio transform to normalize the counts
 }
 
 # tensorflow breaks if fed dashes, so we replace dashes in the protein names with underscores
@@ -73,26 +72,26 @@ geneTestingSCE <- geneTestingSCE[rowData(geneTestingSCE)$Type == "Gene Expressio
 Now we will clean and prepare the data to be used in the model. We use some basic techniques like filtering out poorly-expressed genes and normalizing the GEX matrix.
 
 ```{r clean, results = 'hide', message = FALSE, warning = FALSE}
-#just like for the proteins, we need to turn the delayed matrices to matrices
+# just like for the proteins, we need to turn the delayed matrices to matrices
 counts(geneTrainingSCE) <- as.matrix(counts(geneTrainingSCE))
 counts(geneTestingSCE) <- as.matrix(counts(geneTestingSCE))
 
-#keep genes with at least 1 read in at least 5% of cells (remove low frequency genes) 
+# keep genes with at least 1 read in at least 5% of cells (remove low frequency genes) 
 min_reads <- 1
 min_cells <- 0.05 * ncol(geneTrainingSCE) 
-#calculate a boolean vector for which genes to keep
+# calculate a boolean vector for which genes to keep
 keep <- rowSums(counts(geneTrainingSCE) >= min_reads) >= min_cells
-#subset both SCEs using this vector
+# subset both SCEs using this vector
 geneTrainingSCE <- geneTrainingSCE[keep, ]
 geneTestingSCE <- geneTestingSCE[keep, ]
 
-#for readability, swap rownames from row ID to row symbol
+# for readability, swap rownames from row ID to row symbol
 library(scater)
 featureNames <- uniquifyFeatureNames(ID = rowData(geneTrainingSCE)$ID, names = rowData(geneTrainingSCE)$Symbol)
 rownames(geneTrainingSCE) <- featureNames
 rownames(geneTestingSCE) <- featureNames
 
-#normalize
+# normalize
 geneTrainingSCE <- scater::normalize(geneTrainingSCE)
 geneTestingSCE <- scater::normalize(geneTestingSCE)
 ```
@@ -102,14 +101,14 @@ geneTestingSCE <- scater::normalize(geneTestingSCE)
 Here is where we decide which genes and proteins to train on. I decided to train the model on only the more highly variable genes. Hopefully this reduces noise in the model and makes it easier and faster for the model to train. I also decided to remove CD127 from the list of proteins to predict, as the actual values for it are mostly 0. 
 
 ```{r selectData, results = 'hide', message = FALSE}
-#find highly variable genes
+# find highly variable genes
 library(scran)
 fit <- trendVar(geneTrainingSCE, use.spikes = FALSE)
 dec <- decomposeVar(geneTrainingSCE, fit)
-hvg <- dec$bio > 0 #get biologically relevant genes
+hvg <- dec$bio > 0 # get biologically relevant genes
 
 getGeneMatrix <- function(x) {
-  #subset both SCE's with that set of genes
+  # subset both SCE's with that set of genes
   x[hvg,] %>%
   logcounts() %>%
   t()
@@ -118,10 +117,10 @@ getGeneMatrix <- function(x) {
 trainingData <- getGeneMatrix(geneTrainingSCE)
 testingData <- getGeneMatrix(geneTestingSCE)
 
-#choose output protein(s)
-#CD127 has almost no expression
+# choose output protein(s)
+# CD127 has almost no expression
 select <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE)
-# 1: CD3, 2: CD19, 3: CD45RA, 4: CD4, 5: CD8a, 6: CD14, 7: CD45RO, 8: CD279_PD_1, 9: CD127, 10: CD197_CR7, 11: HLA_DR
+#  1: CD3, 2: CD19, 3: CD45RA, 4: CD4, 5: CD8a, 6: CD14, 7: CD45RO, 8: CD279_PD_1, 9: CD127, 10: CD197_CCR7, 11: HLA_DR
 
 trainingLabels <- proteinTrainingData[,select]
 testingLabels <- proteinTestingData[,select]
@@ -154,31 +153,32 @@ Evolution of model:
 ```{r buildModel, results = 'hide', message = FALSE}
 library(keras)
 
-#set the input layer to be the right dimension
+# set the input layer to be the right dimension
 inputs <- layer_input(shape = c(dim(trainingData)[2]))
 
-#create the first FOUR layers
+# create the first FOUR layers
 output0 <- inputs %>%
-  layer_dropout(rate = .25) %>% #first layer dropout rate set to .25 
-  layer_dense(units = 64, activation = 'relu') %>% #each of these lines creates a new layer, and specifies the number of nodes and the activation function
+  # each of these lines creates a new layer, and specifies the number of nodes and the activation function
+  layer_dropout(rate = .4) %>%
+  layer_dense(units = 128, activation = 'relu') %>% 
   layer_dense(units = 32, activation = 'relu') %>%
-  layer_dense(units = 4, activation = 'relu') %>%
-  layer_dense(units = 8, activation = 'relu')
+  layer_dense(units = 8, activation = 'relu') %>%
+  layer_dense(units = 16, activation = 'relu')
 
 # all of the layers are shared up until the last two, during which each protein gets its own set of 8 nodes leading to 1 output
 makeOutputLayer <- function(x) {
-  layer_dense(output0, units=4) %>%
+  layer_dense(output0, units=8) %>%
     layer_dense(units=1, name= colnames(trainingLabels)[x])
 }
 
-#for each protein, create the last 2 layers and add them to the original 4. See the architecture diagram
+# for each protein, create the last 2 layers and add them to the original 4. See the architecture diagram
 outputs <- lapply(1:dim(trainingLabels)[2], makeOutputLayer)
 
 model <- keras_model(inputs=inputs, outputs=outputs)
 
 model %>% compile(
   loss = "mse",
-  optimizer = optimizer_rmsprop(lr = .0002), #learning rate here
+  optimizer = optimizer_rmsprop(lr = .0001), # learning rate here
   metrics = list("mean_absolute_error"),
 )
 
@@ -191,8 +191,8 @@ print_dot_callback <- callback_lambda(
     cat(".")
   }
 )    
-#epochs refers to how many passes through the data we make, and affects run time linearly. we can use early stopping techniques to set this, or we can just give it a set value to reach. 50 to 100 is usually good, but here I use 25 to help it train fast.
-epochs <- 25
+# epochs refers to how many passes through the data we make, and affects run time linearly. we can use early stopping techniques to set this, or we can just give it a set value to reach. 50 to 100 is usually good, but here I use 25 to help it train fast.
+epochs <- 40
 batch_size <- 128
 
 ```
@@ -217,15 +217,15 @@ scatter <- function(x, y=".") {
 
 scatters <- function() {
   par(mfrow = c(2,2))
-  invisible(lapply(c(3,5,7,8), scatter))
+  invisible(lapply(c(3,7,8,10), scatter))
 }
 
 lossPlots <- function() {
   par(mfrow = c(2,2))
   plot(history$metrics$val_CD45RA_mean_absolute_error, xlab="epoch", ylab="CD45RA mae")
-  plot(history$metrics$val_CD8a_mean_absolute_error, xlab="epoch", ylab="CD8a mae") #5
   plot(history$metrics$val_CD45RO_mean_absolute_error, xlab="epoch", ylab="CD45RO mae")
   plot(history$metrics$val_CD279_PD_1_mean_absolute_error, xlab="epoch", ylab="CD279_PD_1 mae")
+  plot(history$metrics$val_CD197_CCR7_mean_absolute_error, xlab="epoch", ylab="CD8a mae") #5
 }
 
 correlations <- function(){
