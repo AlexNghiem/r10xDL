@@ -1,5 +1,5 @@
 ---
-title: "Deep Learning"
+title: "Deep Learning 2"
 output:
   pdf_document: default
   html_document: default
@@ -29,19 +29,19 @@ We will begin with processing and subsetting of the data, to get it into a form 
 library(DropletUtils)
 library(BiocManager)
 library(SingleCellExperiment)
-SCE <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor4_filtered_feature_bc_matrix.h5")
+SCE <- read10xCounts("../10Xdata/5k_pbmc_protein_v3_nextgem_filtered_feature_bc_matrix.h5")
 
-trainingSize = 10000 # how many cells to train on (this affects speed linearly.. 30000 is optimal)
-testingSize = 5000 # how many cells to test on (this does not affect speed much.. 5000 is plenty)
+trainingSize = 5000 # how many cells to train on (this affects speed linearly.. 30000 is optimal)
+testingSize = 527 # how many cells to test on (this does not affect speed much.. 5000 is plenty)
 
 # grab the first cells as training cells, and then the next cells as testing cells
 geneTrainingSCE <- SCE[,1:trainingSize]
 geneTestingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)]
 
 # this GREP captures the proteins we are interested in from the SCE. Note that this does not include the IgG suite of proteins (these are controls)
-proteinList <- grep("CD.*|HLA-DR", rowData(geneTrainingSCE)$ID)
+proteinList <- rowData(geneTrainingSCE)$Type == "Antibody Capture"
 getProteinMatrix <- function(x) { # from an SCE, gets the transposed matrix of proteins
-  x[proteinList] %>%
+  x[rowData(geneTrainingSCE)$Type == "Antibody Capture"] %>%
     counts() %>%
     as.matrix() %>%
     t() %>%
@@ -50,8 +50,7 @@ getProteinMatrix <- function(x) { # from an SCE, gets the transposed matrix of p
 
 # tensorflow breaks if fed dashes, so we replace dashes in the protein names with underscores
 fixProteinColNames <- function(x) {
-  colnames(x)[colnames(x) == "CD279_PD-1"] <- "CD279_PD_1"
-  colnames(x)[colnames(x) == "HLA-DR"] <- "HLA_DR"
+  colnames(x) <- sub("-", "_", colnames(x))
   x
 }
 
@@ -119,11 +118,11 @@ testingData <- getGeneMatrix(geneTestingSCE)
 
 # choose output protein(s)
 # CD127 has almost no expression
-select <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE)
+#select <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE)
 #  1: CD3, 2: CD19, 3: CD45RA, 4: CD4, 5: CD8a, 6: CD14, 7: CD45RO, 8: CD279_PD_1, 9: CD127, 10: CD197_CCR7, 11: HLA_DR
 
-trainingLabels <- proteinTrainingData[,select]
-testingLabels <- proteinTestingData[,select]
+trainingLabels <- proteinTrainingData#[,select]
+testingLabels <- proteinTestingData#[,select]
 
 ```
 
@@ -162,12 +161,11 @@ output0 <- inputs %>%
   layer_dropout(rate = .4) %>%
   layer_dense(units = 128, activation = 'relu') %>% 
   layer_dense(units = 32, activation = 'relu') %>%
-  layer_dense(units = 8, activation = 'relu') %>%
   layer_dense(units = 16, activation = 'relu')
 
 # all of the layers are shared up until the last two, during which each protein gets its own set of 8 nodes leading to 1 output
 makeOutputLayer <- function(x) {
-  layer_dense(output0, units=8) %>%
+  layer_dense(output0, units=16) %>%
     layer_dense(units=1, name= colnames(trainingLabels)[x])
 }
 
@@ -192,7 +190,7 @@ print_dot_callback <- callback_lambda(
   }
 )    
 # epochs refers to how many passes through the data we make, and affects run time linearly. we can use early stopping techniques to set this, or we can just give it a set value to reach. 50 to 100 is usually good, but here I use 25 to help it train fast.
-epochs <- 40
+epochs <- 100
 batch_size <- 128
 
 ```
@@ -216,16 +214,17 @@ scatter <- function(x, y=".") {
 }
 
 scatters <- function() {
-  par(mfrow = c(2,2))
-  invisible(lapply(c(3,7,8,10), scatter))
+  par(mfrow = c(2,3))
+  invisible(lapply(1:dim(trainingLabels)[2], scatter))
+}
+
+lossPlot <- function(x) {
+  plot(1:epochs, unlist(history$metrics[names(history$metrics) == paste(colnames(trainingLabels)[x],"_mean_absolute_error", sep = "")]), ylab = paste("MAE of", colnames(trainingLabels)[x]), width = 2, height = 2)
 }
 
 lossPlots <- function() {
-  par(mfrow = c(2,2))
-  plot(history$metrics$val_CD45RA_mean_absolute_error, xlab="epoch", ylab="CD45RA mae")
-  plot(history$metrics$val_CD45RO_mean_absolute_error, xlab="epoch", ylab="CD45RO mae")
-  plot(history$metrics$val_CD279_PD_1_mean_absolute_error, xlab="epoch", ylab="CD279_PD_1 mae")
-  plot(history$metrics$val_CD197_CCR7_mean_absolute_error, xlab="epoch", ylab="CD8a mae") #5
+  par(mfrow = c(3,5))
+  invisible(lapply(1:dim(trainingLabels)[2], lossPlot))
 }
 
 correlations <- function(){
@@ -244,6 +243,7 @@ correlations <- function(){
     }
   }
   print(paste("The sum of squared correlations is", total))
+  print(paste("The average correlation is", total/dim(trainingLabels)[2]))
 }
 ```
 

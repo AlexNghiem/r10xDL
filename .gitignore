@@ -3,6 +3,7 @@
 # the huge 10x data file:
 10Xdata/
 vignettes/10Xdata/
+cleanGEXm
 
 # DS_Store
 .DS_Store

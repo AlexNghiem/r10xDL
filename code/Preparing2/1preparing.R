@@ -3,49 +3,103 @@
 
 library(scater)
 library(umap)
+library(purrr) #for piping
+library(gridExtra)
+psceFull <- sce[grep("CD.*|IgG.*|HLA-DR", rowData(sce)$ID),]
 
-sce <- sce[grep("CD.*|IgG.*|HLA-DR", rowData(sce)$ID),]
+psceFull <- scater::normalize(psceFull)
+logcounts(psceFull) <- as.matrix(logcounts(psceFull))
 
-sce <- scater::normalize(sce)
-sce <- scater::runUMAP(sce)
-sceumap <- umap(t(as.matrix(counts(sce))))
+# pumapFull <- psceFull %>%
+#   logcounts() %>%
+#   as.matrix() %>%
+#   t() %>%
+#   umap()
+# pumap <- pumapFull
 
-plotUMAP(sce)
+psce <- psceFull[,!is.na(psceFull$faustAnnotation)]
+pumapClean <- psce %>%
+  logcounts() %>%
+  as.matrix() %>%
+  t() %>%
+  umap()
+pumap <- pumapClean
 
+# psce <- psceFull[,!is.na(psceFull$faustAnnotation)]
+# psce <- psce[grep("CD.*|HLA-DR", rowData(psce)$ID),]
+# pumapCleanNoIgG <- psce %>%
+#   logcounts() %>%
+#   as.matrix() %>%
+#   t() %>%
+#   umap()
+# pumap <- pumapCleanNoIgG
 
+#pumap <- pumapFull$layout
 
+uplot <- function() {
+  par(mfrow = c(1,1))
+  plot(pumap$layout[,1], pumap$layout[,2], pch = '.', main = "Basic UMAP")
+}
 
+#sum(pumap$layout[,2]>12)
+xrange <- range(pumap[,1])
+yrange <- range(pumap[,2])
 
+pplot <- function(pNum) { #pNum is the row number of the protein we want to see
+  ggplot(data.frame(pumap),  aes(pumap[,1], pumap[,2], colour = logcounts(psce)[pNum,])) + #we want cells colored to their expression of the given protein
+    geom_point(stroke = 0, shape='.') +
+    scale_colour_gradientn(colours = rev(rainbow(4)), name = paste("Log", rowData(psce)$ID[pNum])) +
+    ggtitle(rowData(psce)$ID[pNum])
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-getGGPlot <- function(pNum) { #pNum is the row number of the protein we want to see
-  sceUMAP <- reducedDim(sce) #manually grab the UMAP data from the SingleCellExperiment object
-  
-  ggplot(data.frame(sceUMAP),  aes(sceUMAP[,1], sceUMAP[,2], colour = logcounts(sce)[pNum,])) + #we want cells colored to their expression of the given protein
-    geom_point() +
-    scale_colour_gradientn(colours = rainbow(4), name = paste("log of", rowData(sce)$ID[pNum], "expression")) +
-    ggtitle(rowData(sce)$ID[pNum])
+pplots <- function() {
+  grid.arrange(grobs = lapply(1:dim(counts(psce))[1], pplot), nrow = 3)
 }
 
 
-getGGPlot <- function(num) { #pNum is the row number of the protein we want to see
-  sceUMAP <- reducedDim(sce[,sce$faustAnnotation==]) #manually grab the UMAP data from the SingleCellExperiment object
-  
-  ggplot(data.frame(sceUMAP),  aes(sceUMAP[,1], sceUMAP[,2])) + #we want cells colored to their expression of the given protein
-    geom_point() +
-    ggtitle(rowData(sce)$ID[class])
+
+tab <- table(sce$faustAnnotation)
+
+aplot <- function(num) { #num is the number of the annotation we want to see
+  s <- !is.na(psce$faustAnnotation) & psce$faustAnnotation==names(tab[num])
+  m <- pumap[s,]
+  plot(m[,1], m[,2], xlim = xrange, ylim = yrange, main = names(tab[num]), pch = '.', col = psce$color[s])
+}
+aplots <- function() {
+  par(mfrow = c(3,4))
+  lapply(1:dim(tab), aplot)
 }
 
-lapply(1:14, getGGPlot)
+ggplot(data.frame(pumap),  aes(pumap[,1], pumap[,2], colour = psce$faustAnnotation)) + #we want cells colored to their expression of the given protein
+  geom_point(stroke = 0, size = .2)
+
+
+dplot <- function(donor) {
+  donor <- paste("donor", donor, sep = '')
+  s <- psce$Sample == donor
+  m <- pumap[s,]
+  plot(m[,1], m[,2], xlim = xrange, ylim = yrange, main = donor, pch = '.', col = psce$color[s])
+}
+dplots <- function() {
+  par(mfrow = c(2,2))
+  lapply(1:4, dplot)
+}
+
+
+
+
+
+
+xrange <- range(pumap[,1])
+yrange <- range(pumap[,2])
+
+dplot <- function(donor) {
+  donorChar <- paste("donor", donor, sep = '')
+  s <- gsce$Sample == donorChar
+  m <- gumap[s,]
+  plot(m[,1], m[,2], xlim = xrange, ylim = yrange, main = donorChar, pch = '.', col = psce$color[s])
+}
+
+par(mfrow = c(1,4)) # 2,2 may be better to see detail
+invisible(lapply(1:4, dplot)) # invisible removes the print output of lapply
+

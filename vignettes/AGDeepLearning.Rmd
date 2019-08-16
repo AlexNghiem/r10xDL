@@ -1,0 +1,95 @@
+---
+title: "AGDeepLearning"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r read}
+library(BiocManager)
+library(SingleCellExperiment)
+library(DropletUtils)
+sce <- read10xCounts("../10Xdata/vdj_v1_hs_aggregated_donor4_filtered_feature_bc_matrix.h5")
+```
+
+```{r subset}
+agsce <- sce[rowData(sce)$Type == "Antibody Capture",]
+agsce <- agsce[!grepl(".*TotalSeqC", rowData(agsce)$Symbol),]
+counts(agsce) <- as.matrix(counts(agsce))
+gsce <- sce[rowData(sce)$Type == "Gene Expression"]
+```
+
+```{r visualize}
+logcounts(agsce) <- log2(1+counts(agsce))
+par(mfrow=c(2,2))
+for (x in 1:dim(counts(agsce))[1]) {
+  data <- hist(unlist(logcounts(agsce[x,])), breaks = 50, plot = FALSE)
+  data$counts <- log2(1 + data$counts)
+  plot(data, main = paste("Antigen:",rowData(agsce)$Symbol[x]), xlab = "Log2 binding of antigen", ylab = "Log2 frequency")
+}
+```
+
+So here we can see that there are not very obvious cutoffs for a binary positive/negative classification.
+
+```{r test}
+f1 <- function(x) {
+  sum(x > 0)
+}
+
+getAVGcounts <- function(x) {
+  if (sum(apply(counts(agsce), 2, f1) == x) > 1) {
+    y <- mean(colSums(counts(agsce)[, which(apply(counts(agsce), 2, f1) == x)]))
+  }
+  else {
+    y <- sum(counts(agsce)[, which(apply(counts(agsce), 2, f1) == x)])
+  }
+  log2(1 + y)
+}
+plot(0:50, lapply(0:50, getAVGcounts))
+```
+
+```{r NC}
+#ncsce <- agsce[grepl(".*NC", rowData(agsce)$Symbol),]
+```
+
+
+This is a chart for the various total antigen counts for a given number of non-negative antigens
+```{r test2}
+data <- hist(colSums(counts(agsce[,which(apply(counts(agsce), 2, f1) ==     1    )])), breaks = 50, plot = FALSE)
+data$counts <- log2(1+data$counts)
+plot(data)
+```
+
+
+
+```{r pairwise}
+pair <- function(x, y){
+  plot(counts(agsce)[x, ], counts(agsce)[y, ], xlab = rowData(agsce)$Symbol[x], ylab = rowData(agsce)$Symbol[y])
+}
+
+par(mfrow=c(2,5))
+set.seed(123)
+nums <- sample(1:50, 50)
+for (x in 1:5) {
+  pair(nums[x], nums[x+25])
+}
+
+agsce2 <- scater::normalize(agsce)
+
+pair2 <- function(x, y){
+  plot(logcounts(agsce)[x, ], logcounts(agsce)[y, ], xlab = rowData(agsce)$Symbol[x], ylab = rowData(agsce)$Symbol[y])
+}
+for (x in 1:5) {
+  pair2[nums[x], nums[x+25]]
+}
+```
+
+
+
+
+
+
+
+
