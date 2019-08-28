@@ -38,7 +38,7 @@ CD45RA+ CD45RO+ CD197_CCR7+ CD279_PD-1- | 1566
 
 Notably: before entering FAUST, the data was cleaned using this function:
 
-```{r clean}
+```{r clean, eval = FALSE}
 feat.ctrl <- rownames(cite)[grep('IgG', rownames(cite))]
 cite <- calculateQCMetrics(cite, feature_controls = list(IgG = feat.ctrl))
 qc.igg <- isOutlier(cite$total_counts_IgG, nmads = 3, type = 'higher')
@@ -230,6 +230,6 @@ aplot <- function(num) { # num is the number of the annotation we want to see
 
 tab <- table(sce$faustAnnotation)
 par(mfrow = c(3,3))
-lapply(2:dim(tab), aplot) # we don't want to plot 0_0_0_0_0
+invisible(lapply(2:dim(tab), aplot)) # we don't want to plot 0_0_0_0_0
 ```
 

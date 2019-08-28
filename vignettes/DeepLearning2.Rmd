@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 ```
 
-Here we will be doing a quick foray into deep learning using the 10X genomics data published in June 2019. This data tracks around 230,000 cells across 4 different donors. For each cell, the data specify gene expression data, protein expression data, and antigen specificity data.
+Here we will be doing a quick foray into deep learning using the 10X genomics data published in July 2019. This data tracks around 5000 PBMC cells. For each cell, the data specify gene expression data, protein expression data, and antigen specificity data.
 
 Broadly, our goal is to create a machine learning approach to predict protein expression from gene expression data. This model, if it is effective, could be useful for predicting cell type, imputing sparse protein counts, or transferring to different scRNA-seq data sets to generate new protein information. 
 
@@ -23,25 +23,29 @@ I will be using BioConductor/SingleCellExperiment to store and process the data,
 
 ## Cut up the data
 
-We will begin with processing and subsetting of the data, to get it into a form that can be fed into Keras. In this vignette, I work only with the last of the four donors, and therefore only have access to around 36000 cells.
+We will begin with processing and subsetting of the data, to get it into a form that can be fed into Keras.
 
 ```{r reading, results = 'hide', message = FALSE}
+set.seed(31415)
 library(DropletUtils)
 library(BiocManager)
 library(SingleCellExperiment)
-SCE <- read10xCounts("../10Xdata/5k_pbmc_protein_v3_nextgem_filtered_feature_bc_matrix.h5")
+trainingSCE <- read10xCounts("../10Xdata/5k_pbmc_protein_v3_nextgem_filtered_feature_bc_matrix.h5")
+testingSCE <- read10xCounts("../10Xdata/5k_pbmc_protein_v3_filtered_feature_bc_matrix.h5")
 
-trainingSize = 5000 # how many cells to train on (this affects speed linearly.. 30000 is optimal)
-testingSize = 527 # how many cells to test on (this does not affect speed much.. 5000 is plenty)
+trainingSize <- ncol(trainingSCE)
+testingSize <- ncol(testingSCE)
 
-# grab the first cells as training cells, and then the next cells as testing cells
-geneTrainingSCE <- SCE[,1:trainingSize]
-geneTestingSCE <- SCE[,(trainingSize+1):(trainingSize+testingSize)]
+#singler = CreateSinglerSeuratObject(counts = 'GSE74923_series_matrix.txt', annot = 'GSE74923_types.txt', project.name = 'GSE74923', min.genes = 500, min.cells = 2, npca = 10, regress.out ='nUMI', technology= 'C1', species = 'Mouse', citation = 'Kimmerling et al. 2016',reduce.file.size = T, variable.genes = 'de', normalize.gene.length = T)
 
-# this GREP captures the proteins we are interested in from the SCE. Note that this does not include the IgG suite of proteins (these are controls)
-proteinList <- rowData(geneTrainingSCE)$Type == "Antibody Capture"
+
+# sum(rowData(trainingSCE) != rowData(testingSCE))
+# This is a good sanity check -> the rows in each SCE are equivalent. This will not always be the case
+
+# this is a boolean list with TRUE in the indexes of proteins
+proteinList <- (rowData(trainingSCE)$Type == "Antibody Capture") & !grepl("IgG*", rowData(trainingSCE)$Symbol)
 getProteinMatrix <- function(x) { # from an SCE, gets the transposed matrix of proteins
-  x[rowData(geneTrainingSCE)$Type == "Antibody Capture"] %>%
+  x[proteinList] %>%
     counts() %>%
     as.matrix() %>%
     t() %>%
@@ -56,15 +60,17 @@ fixProteinColNames <- function(x) {
 
 library(purrr)
 library(compositions)
-proteinTrainingData <- geneTrainingSCE %>%
+proteinTrainingData <- trainingSCE %>%
   getProteinMatrix() %>%
   fixProteinColNames()
-proteinTestingData <- geneTestingSCE %>%
+proteinTestingData <- testingSCE %>%
   getProteinMatrix() %>%
   fixProteinColNames()
 
-geneTrainingSCE <- geneTrainingSCE[rowData(geneTrainingSCE)$Type == "Gene Expression"]
-geneTestingSCE <- geneTestingSCE[rowData(geneTestingSCE)$Type == "Gene Expression"]
+remove(fixProteinColNames)
+
+geneTrainingSCE <- trainingSCE[rowData(trainingSCE)$Type == "Gene Expression"]
+geneTestingSCE <- testingSCE[rowData(testingSCE)$Type == "Gene Expression"]
 ```
 
 ## Cleaning the data
@@ -75,9 +81,9 @@ Now we will clean and prepare the data to be used in the model. We use some basi
 counts(geneTrainingSCE) <- as.matrix(counts(geneTrainingSCE))
 counts(geneTestingSCE) <- as.matrix(counts(geneTestingSCE))
 
-# keep genes with at least 1 read in at least 5% of cells (remove low frequency genes) 
+# keep genes with at least 1 read in at least 1% of cells (remove low frequency genes) 
 min_reads <- 1
-min_cells <- 0.05 * ncol(geneTrainingSCE) 
+min_cells <- 0.01 * ncol(geneTrainingSCE) 
 # calculate a boolean vector for which genes to keep
 keep <- rowSums(counts(geneTrainingSCE) >= min_reads) >= min_cells
 # subset both SCEs using this vector
@@ -106,24 +112,17 @@ fit <- trendVar(geneTrainingSCE, use.spikes = FALSE)
 dec <- decomposeVar(geneTrainingSCE, fit)
 hvg <- dec$bio > 0 # get biologically relevant genes
 
-getGeneMatrix <- function(x) {
+getGeneData <- function(x) {
   # subset both SCE's with that set of genes
   x[hvg,] %>%
   logcounts() %>%
   t()
 }
 
-trainingData <- getGeneMatrix(geneTrainingSCE)
-testingData <- getGeneMatrix(geneTestingSCE)
+geneTrainingData <- getGeneData(geneTrainingSCE)
+geneTestingData <- getGeneData(geneTestingSCE)
 
-# choose output protein(s)
-# CD127 has almost no expression
-#select <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE)
-#  1: CD3, 2: CD19, 3: CD45RA, 4: CD4, 5: CD8a, 6: CD14, 7: CD45RO, 8: CD279_PD_1, 9: CD127, 10: CD197_CCR7, 11: HLA_DR
-
-trainingLabels <- proteinTrainingData#[,select]
-testingLabels <- proteinTestingData#[,select]
-
+remove(getGeneData)
 ```
 
 ## Building the model
@@ -153,24 +152,24 @@ Evolution of model:
 library(keras)
 
 # set the input layer to be the right dimension
-inputs <- layer_input(shape = c(dim(trainingData)[2]))
+inputs <- layer_input(shape = c(dim(geneTrainingData)[2]))
 
 # create the first FOUR layers
 output0 <- inputs %>%
   # each of these lines creates a new layer, and specifies the number of nodes and the activation function
-  layer_dropout(rate = .4) %>%
-  layer_dense(units = 128, activation = 'relu') %>% 
-  layer_dense(units = 32, activation = 'relu') %>%
-  layer_dense(units = 16, activation = 'relu')
+  layer_dropout(rate = 0) %>%
+  layer_dense(units = 256, activation = 'relu') %>% 
+  layer_dense(units = 128, activation = 'relu') %>%
+  layer_dense(units = 64, activation = 'relu')
 
 # all of the layers are shared up until the last two, during which each protein gets its own set of 8 nodes leading to 1 output
 makeOutputLayer <- function(x) {
-  layer_dense(output0, units=16) %>%
-    layer_dense(units=1, name= colnames(trainingLabels)[x])
+  layer_dense(output0, units=32) %>%
+    layer_dense(units=1, name= colnames(proteinTrainingData)[x])
 }
 
 # for each protein, create the last 2 layers and add them to the original 4. See the architecture diagram
-outputs <- lapply(1:dim(trainingLabels)[2], makeOutputLayer)
+outputs <- lapply(1:dim(proteinTrainingData)[2], makeOutputLayer)
 
 model <- keras_model(inputs=inputs, outputs=outputs)
 
@@ -190,16 +189,17 @@ print_dot_callback <- callback_lambda(
   }
 )    
 # epochs refers to how many passes through the data we make, and affects run time linearly. we can use early stopping techniques to set this, or we can just give it a set value to reach. 50 to 100 is usually good, but here I use 25 to help it train fast.
-epochs <- 100
+epochs <- 50
 batch_size <- 128
 
 ```
 
 ```{r trainModel, results = 'hide'}
+set.seed(42)
 # Train the model
 history <- model %>% fit(
-  x = trainingData,
-  y = lapply(1:dim(trainingLabels)[2], function(x) {trainingLabels[,x]}),
+  x = geneTrainingData,
+  y = lapply(1:dim(proteinTrainingData)[2], function(x) {proteinTrainingData[,x]}),
   batch_size = batch_size,
   epochs = epochs,
   validation_split = 0.2,
@@ -210,30 +210,30 @@ history <- model %>% fit(
 
 ```{r graph, echo = FALSE}
 scatter <- function(x, y=".") {
-  plot(testingLabels[,x], unlist(predict(model, testingData)[x]), xlab = paste(colnames(testingLabels)[x],"log value from data"), ylab = "Log value predicted by model", pch = y)
+  plot(proteinTestingData[,x], unlist(predict(model, geneTestingData)[x]), xlab = paste(colnames(proteinTestingData)[x],"log value from data"), ylab = "Log value predicted by model", pch = y)
 }
 
 scatters <- function() {
   par(mfrow = c(2,3))
-  invisible(lapply(1:dim(trainingLabels)[2], scatter))
+  invisible(lapply(1:dim(proteinTrainingData)[2], scatter))
 }
 
 lossPlot <- function(x) {
-  plot(1:epochs, unlist(history$metrics[names(history$metrics) == paste(colnames(trainingLabels)[x],"_mean_absolute_error", sep = "")]), ylab = paste("MAE of", colnames(trainingLabels)[x]), width = 2, height = 2)
+  plot(1:epochs, unlist(history$metrics[names(history$metrics) == paste(colnames(proteinTrainingData)[x],"_mean_absolute_error", sep = "")]), ylab = paste("MAE of", colnames(proteinTrainingData)[x]))
 }
 
 lossPlots <- function() {
   par(mfrow = c(3,5))
-  invisible(lapply(1:dim(trainingLabels)[2], lossPlot))
+  invisible(lapply(1:dim(proteinTrainingData)[2], lossPlot))
 }
 
 correlations <- function(){
-  predictions <- predict(model, testingData)
+  predictions <- predict(model, geneTestingData)
   total <- 0
-  for (i in 1:dim(trainingLabels)[2]) {
-    corr <- cor(as.numeric(unlist(predictions[i])), testingLabels[,i])
+  for (i in 1:dim(proteinTrainingData)[2]) {
+    corr <- cor(as.numeric(unlist(predictions[i])), proteinTestingData[,i])
     if (!is.na(corr)){
-      print(paste("The correlation between predicted and actual values for", colnames(testingLabels)[i], "is", corr))
+      print(paste("The correlation between predicted and actual values for", colnames(proteinTestingData)[i], "is", corr))
       if (corr > 0) {
         total <- total + corr^2
       }
@@ -243,7 +243,7 @@ correlations <- function(){
     }
   }
   print(paste("The sum of squared correlations is", total))
-  print(paste("The average correlation is", total/dim(trainingLabels)[2]))
+  print(paste("The average correlation is", total/dim(proteinTrainingData)[2]))
 }
 ```
 

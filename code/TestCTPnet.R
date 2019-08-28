@@ -47,14 +47,13 @@ GEX <- runPCA(GEX, ncomponents = 10)
 GEX <- runTSNE(GEX, use_dimred = 'PCA')
 GEX <- runUMAP(GEX, use_dimred = 'PCA')
 
-g3 <- buildSNNGraph(GEX, k = 50, use.dimred = 'PCA')
-clust3 <- igraph::cluster_louvain(g3)$membership
-table(clust3)
-GEX$cluster = as.factor(clust3)
-GEX$cluster2 = as.factor(clust2)
+g <- buildSNNGraph(GEX, k = 10, use.dimred = 'PCA')
+clusters <- igraph::cluster_louvain(g)$membership
+table(clusters)
+GEX$clusters = as.factor(clusters)
 
-plotReducedDim(GEX, "TSNE", colour_by="cluster") + ggtitle("TSNE of real GEX")
-plotReducedDim(GEX, "UMAP", colour_by="cluster") + ggtitle("UMAP of real GEX")
+plotReducedDim(GEX, "UMAP", colour_by="clusters") + ggtitle("UMAP of real GEX")
+
 plotReducedDim(GEX, "TSNE", colour_by="cluster2") + ggtitle("TSNE of real GEX colored by protein clusters")
 
 counts(realCITE) <- as.matrix(counts(realCITE))

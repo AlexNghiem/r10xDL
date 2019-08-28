@@ -86,8 +86,10 @@ Please refer to [SAVER-X package](https://github.com/jingshuw/SAVERX) for detail
 library(cTPnet)
 library(Seurat)
 library(reticulate)
-data("cTPnet_demo")
-head(demo_data[,1:6])
+x <- readRDS("10Xdata/data_denoised.rds")
+dcounts <- x$estimate
+#data("cTPnet_demo")
+#head(demo_data[,1:6])
 ```
 
 ## 3.2 Immunophenotype (surface protein) imputation
@@ -102,7 +104,7 @@ use_virtualenv("C:/Users/zhouzilu/Documents/test_ctpnet")
 
 Let's create a seurat object `demo` and generate the prediction.
 ```{r, message=FALSE, warning=FALSE}
-model_file_path="C:/Users/zhouzilu/Documents/PBMCCBMC_joint_model_1"
+model_file_path="./10Xdata/PBMCCBMC_joint_model_1"
 data_type='Seurat3'
 demo = CreateSeuratObject(demo_data)
 demo = cTPnet(demo,data_type,model_file_path)
