@@ -8,6 +8,11 @@ cleanGEXm
 # DS_Store
 .DS_Store
 
+# RDS files
+.rds
+
+
+
 # VV FROM TEMPLATE ROB GAVE ME VV
 
 # History files
