@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Analyzes 10X Genomics Data to Correlate GEX Data to Flow Data • r10xDL</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.1/css/all.min.css" integrity="sha256-PbSmjxuVAzJ6FPvNYsrXygfGhNJYyZ2GktDbkMBqQZg=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.1/css/v4-shims.min.css" integrity="sha256-A6jcAdwFD48VMjlI3GDxUd+eCQa7/KWy6G9oe/ovaPA=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="Analyzes 10X Genomics Data to Correlate GEX Data to Flow Data">
 <meta property="og:description" content="10X Genomics recently (4 June 2019) released a large data set of around 150,000 T-cells across 4 donors. For each cell, the data set includes gene expression data (GEX) as well as protein data. This package seeks to analyze and visualize this data, and use machine learning to draw connections between these two classes of data. ">
 <meta name="twitter:card" content="summary">
@@ -18,7 +19,7 @@
 <![endif]-->
 </head>
 <body>
-    <div class="container template-article">
+    <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
@@ -38,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -56,6 +57,9 @@
       <a href="articles/10xVisualization.html">10xVisualization</a>
     </li>
     <li>
+      <a href="articles/AGDeepLearning.html">AGDeepLearning</a>
+    </li>
+    <li>
       <a href="articles/Better10xVisualization.html">Better10xVisualization</a>
     </li>
     <li>
@@ -65,19 +69,28 @@
       <a href="articles/Deep%20Learning%20Types.html">Deep Learning Types</a>
     </li>
     <li>
-      <a href="articles/DeepLearningFirst.html">DeepLearningFirst</a>
+      <a href="articles/DeepLearning.html">Deep Learning</a>
     </li>
     <li>
-      <a href="articles/DeepLearningSecond.html">DeepLearningSecond</a>
+      <a href="articles/DeepLearning2.html">Deep Learning 2</a>
     </li>
     <li>
       <a href="articles/Dictionary.html">Dictionary</a>
+    </li>
+    <li>
+      <a href="articles/FAUSTvis.html">FAUSTvis</a>
+    </li>
+    <li>
+      <a href="articles/Imputation.html">Imputation</a>
     </li>
     <li>
       <a href="articles/Keras%20Guide.html">Keras Guide</a>
     </li>
     <li>
       <a href="articles/TensorFlow%20example.html">TensorFlow example</a>
+    </li>
+    <li>
+      <a href="articles/cTPnet%20Vignette.html">cTP-net Vignette (Seurat v3)</a>
     </li>
   </ul>
 </li>
@@ -91,20 +104,37 @@
 <!--/.navbar -->
 
       
-      </header><div class="row">
-  <div class="col-md-9 contents">
-    
 
-    
-    
-<div id="readme" class="section level2">
+      </header><div class="row">
+  <div class="contents col-md-9">
+<div id="readme" class="section level1">
+<div class="page-header"><h1 class="hasAnchor">
+<a href="#readme" class="anchor"></a>README</h1></div>
+<div id="r-markdown" class="section level2">
 <h2 class="hasAnchor">
-<a href="#readme" class="anchor"></a>README</h2>
-<p>options(pkgdown.internet = TRUE) in order to keep the original settings. I had to turn this to false in order to get the pkgdown to compile</p>
+<a href="#r-markdown" class="anchor"></a>R Markdown</h2>
+<p>This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>.</p>
+<p>When you click the <strong>Knit</strong> button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(cars)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co">##      speed           dist       </span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="co">##  Min.   : 4.0   Min.   :  2.00  </span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="co">##  1st Qu.:12.0   1st Qu.: 26.00  </span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="co">##  Median :15.0   Median : 36.00  </span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5"><span class="co">##  Mean   :15.4   Mean   : 42.98  </span></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6"><span class="co">##  3rd Qu.:19.0   3rd Qu.: 56.00  </span></a>
+<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="co">##  Max.   :25.0   Max.   :120.00</span></a></code></pre></div>
+</div>
+<div id="including-plots" class="section level2">
+<h2 class="hasAnchor">
+<a href="#including-plots" class="anchor"></a>Including Plots</h2>
+<p>You can also embed plots, for example:</p>
+<p><img src="README_files/figure-gfm/pressure-1.png"><!-- --></p>
+<p>Note that the <code>echo = FALSE</code> parameter was added to the code chunk to prevent printing of the R code that generated the plot.</p>
+</div>
 </div>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="license">
 <h2>License</h2>
 <ul class="list-unstyled">
@@ -118,8 +148,7 @@
 </ul>
 </div>
 
-      </div>
-
+  </div>
 </div>
 
 
@@ -128,12 +157,14 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.9000.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>
