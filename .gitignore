@@ -53,4 +53,4 @@ vignettes/*.pdf
 *.knit.md
 
 
-docs/
+# used to have "docs/" but I removed it so that my docs would actually sync for my website!
