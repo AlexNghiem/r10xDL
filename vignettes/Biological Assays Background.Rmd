@@ -1,0 +1,33 @@
+---
+title: "Biological Assays Background"
+output: rmarkdown::html_vignette
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This section is intended to give a brief introduction so that my project will make sense. **I will mark critical information in bold.** Everything else helps create a more complete picture, but is generally unnecessary.
+
+## Single-Cell Assays
+
+**Single-cell assays refer to biological assays which measure features on individual cells in a sample.** These single-cell assays provide much higher resolution for a given sample than their simpler bulk-assay counterparts. For example, a bulk assay might measure the total amount of CD3 mRNA in a sample of 1000 cells, while a single-cell assay might measure the precise amount of CD3 mRNA in each individual cell in that sample. It should then be unsurprising that single-cell assays are generally more complex and more expensive than their bulk assay counterparts.
+
+Single-cell assays have developed rapidly in recent years, and new data are being generated with ever-increasing speed. Futhermore, single-cell data is high-dimensional, as every cell in a sample has measurements for every feature. This means that single-cell data is incredibly rich and there is a lot that can be learned from even a single sample. However, to take advantage of this richness requires complex statistics to deal with noise and other artifacts. In other words, there is emerging an unprecedented opportunity for computational biologists to devise methods for cleaning up and analyzing this new data.
+
+## Flow Cytometry
+
+Flow Cytometry has been evolving since its patent in 1953, and has grown increasingly popular since then. **Flow Cytometry is a single-cell assay that measures protein abundances on the surface of cells. It gives high quality data at a single-cell level, but requires choosing beforehand a specific set of proteins to measure.** This is a great tool for learning about the individual cells in a sample. For example, if I had a tissue sample of thousands of cells, I could use Flow Cytometry to find out how much CD3, CD19, and CD27 protein that each individual cell expressed on its surface. CD3 is a T-cell marker, so any cells that express significant CD3 are likely T-cells, while CD19 is a B-cell marker, etc. Since its inception, flow cytometry has been a gold standard for classifying individual cell types in a sample, among many other useful applications.
+
+## RNA-seq and scRNA-seq
+
+**RNA-seq, short for RNA sequencing, is an assay that measures the total abundance of each type of RNA in a sample.** This assay was developed around 2005, and is useful for many things, including categorizing tissue or measuring a tissue's response to different stimuli.
+
+**About a decade later, in 2014, it became readily possible to modify this bulk RNA-seq assay into a single-cell RNA-seq assay.** In other words, rather than getting information about RNA counts from the sample as a whole, you get cell-level definition in the data. This suddenly opened up a whole new world of possibilities. You can categorize individual cells based on their RNA expression profiles; you can track responses to stimuli as a function of cell-type; you can even understand much of the history and even future state of your sample. 
+
+## CITE-seq
+
+For several years, it was impossible to get both RNA and cell-surface protein data for individual cells in a sample. In other words, scRNA-seq and Flow Cytometry were mutually exclusive. Doing one would destroy the sample and prevent you from doing the other. While this is still technically true, a completely new assay was developed in 2017 which effectively combined the two.
+
+**CITE-seq is a single-cell assay that measures both RNA expression and cell-surface protein expression.** In other words, for every cell in a sample, CITE-seq provides information about both its genome (RNA) and its transcriptome (protein). This is cool and new, and there is a lot that can be learned using this assay. My work during this summer focused on analyzing public CITE-seq data from 10X Genomics, available at https://support.10xgenomics.com/single-cell-gene-expression/datasets.

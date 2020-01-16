@@ -1,33 +1,20 @@
-README
+Alex's Single-Cell Genomics Deep Learning Project (Summer '19)
 ================
 
-## R Markdown
+# Structure of this site
 
-This is an R Markdown document. Markdown is a simple formatting syntax
-for authoring HTML, PDF, and MS Word documents. For more details on
-using R Markdown see <http://rmarkdown.rstudio.com>.
+The content is organized under the articles tab in the top menu. There are two background pieces, for Single-Cell Assays and Deep Learning. 
 
-When you click the **Knit** button a document will be generated that
-includes both content as well as the output of any embedded R code
-chunks within the document. You can embed an R code chunk like this:
+If you want to jump straight into my computational work, see the Deep Learning Workflow and Results page.
 
-``` r
-summary(cars)
-```
+Otherwise, just have a look around!
 
-    ##      speed           dist       
-    ##  Min.   : 4.0   Min.   :  2.00  
-    ##  1st Qu.:12.0   1st Qu.: 26.00  
-    ##  Median :15.0   Median : 36.00  
-    ##  Mean   :15.4   Mean   : 42.98  
-    ##  3rd Qu.:19.0   3rd Qu.: 56.00  
-    ##  Max.   :25.0   Max.   :120.00
+## Thank you to my mentors
 
-## Including Plots
+This project is a result of my internship with Raphael Gottardo's Lab at the Fred Hutch. Huge thanks to Dr. Gottardo and the team for taking me on. Specifically, Rob Amezquita took me under his wing and mentored me. Thank you Rob for being so helpful and fun! Etienne Becht and Evan Greene get honorable mention for their help and general involvement with my work. This entire field of computational biology was completely new to me, and I feel blessed to have such intelligent and patient teachers to help me navigate my various challenges. With their help, I managed to learn a great deal, and even do some sorta-cool science!
 
-You can also embed plots, for example:
 
-![](README_files/figure-gfm/pressure-1.png)<!-- -->
 
-Note that the `echo = FALSE` parameter was added to the code chunk to
-prevent printing of the R code that generated the plot.
+
+options(pkgdown.internet = TRUE) in order to keep the original settings. I had to turn this to false in order to get the pkgdown to compile
+

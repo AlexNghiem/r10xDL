@@ -1,0 +1,30 @@
+---
+title: "Deep Learning Benchmarking - Dropout"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+Here I will present my exploration of dropout in my model. Note that this does not result in a novel conclusion by any means; the result is exactly what you expect in most machine learning applications. However, I think it is interesting to think about why we get that result, and to see it in this context.
+
+## Background
+
+To understand dropout, first we have to understand what it is trying to prevent: a phenomenon called 'overfitting." 
+
+Overfitting occurs when a model trains too long using too little training data. Instead of learning to recognize patterns in the input data, it actually also begins to recognize specific noise in the input data. The model itself is happy to do this, because that means it can do a fantastic job recognizing and categorizing its original training inputs.
+
+However, we programmers aren't so much fans of this, because the final goal of our model is not to perform well on training data, but rather to extrapolate well to new data. When a model overfits, it begins to rely on types of information that do not show up consistently in new data.
+
+Therefore, we must prevent models from 'overfitting' to noise, which is where the technique of dropout comes in.
+
+Dropout refers, literally, to dropping nodes out of our model. It is used only during training, not when making predictions using the trained model. Dropout occurs on a per-layer basis, and affects nodes at random. Before each individual training pass, any layers which have dropout will randomly select some set of nodes to remove temporarily. The training pass is completed, the weights are updated through the entire model, and then the dropped-out nodes are restored.
+
+The effect of dropout is to prevent the model from being overly reliant on any small, specific patterns. It encourages the model to find larger trends and themes on which to base its predictions, which steers the model away from focusing on noise. 
+
+I know that this explanation is hand-wavey, but so far I have been unable to come up with or find a more rigorous proof. In the examples to come, hopefully it will become clear that regardless of the explanation, dropout does indeed work.
+
+

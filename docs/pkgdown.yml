@@ -2,17 +2,8 @@ pandoc: 2.3.1
 pkgdown: 1.4.1.9000
 pkgdown_sha: 03fa5022ff360a6f87586145e45f71fe090c64a2
 articles:
-  10xVisualization: 10xVisualization.html
-  AGDeepLearning: AGDeepLearning.html
-  Better10xVisualization: Better10xVisualization.html
-  DL Papers: DL Papers.html
-  Deep Learning Types: Deep Learning Types.html
-  DeepLearning: DeepLearning.html
-  DeepLearning2: DeepLearning2.html
-  Dictionary: Dictionary.html
-  FAUSTvis: FAUSTvis.html
-  Imputation: Imputation.html
-  Keras Guide: Keras Guide.html
-  TensorFlow example: TensorFlow example.html
-  cTPnet Vignette: cTPnet Vignette.html
+  Biological Assays Background: Biological Assays Background.html
+  Deep Learning Background: Deep Learning Background.html
+  Dropout Benchmarking: Dropout Benchmarking.html
+  Takeaways: Takeaways.html
 

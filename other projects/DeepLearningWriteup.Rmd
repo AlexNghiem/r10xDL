@@ -1,8 +1,8 @@
 ---
-title: "Deep Learning 2"
+title: "Deep Learning Workflow and Results"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,17 +11,17 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 ```
 
-Here we will be doing a quick foray into deep learning using the 10X genomics data published in July 2019. This data tracks around 5000 PBMC cells. For each cell, the data specify gene expression data, protein expression data, and antigen specificity data.
+In this vignette, I will overview my deep learning explorations of the 10X genomics data published in July 2019. This data tracks around 10,000 PBMC cells. For each cell, the data include measurements for gene expression, protein expression, and antigen specificity.
 
-Broadly, our goal is to create a machine learning approach to predict protein expression from gene expression data. This model, if it is effective, could be useful for predicting cell type, imputing sparse protein counts, or transferring to different scRNA-seq data sets to generate new protein information. 
+Broadly, my goal was to create a machine learning approach to predict protein expression from gene expression data. This model, if it is effective, could be useful for predicting cell type, imputing sparse protein counts, or transferring to different scRNA-seq data sets to generate brand-new protein information. 
 
-We have a lot of data here to work with, but it is not obvious how best to approach building the model. I decided to use a basic neural net, as they have shown excellent performance recently in transcriptomic problems, and are ideal for predicting complex nonlinear functions such as protein values. Other options include decision forests and linear regression, both of which might work here and have relative benefits such as simplicity and readability.
+We have a lot of data here to work with, but it is not obvious how best to approach building the model. I decided to use a basic neural net, as they have shown excellent performance recently in transcriptomic problems, and are ideal for predicting the types of complex nonlinear functions I expect from these systems. Other options include decision forests and linear regression, both of which might work here and have relative benefits such as simplicity and readability.
 
-Please note that several hyperparameters have been adjusted to help the vignette run quickly. I will mark these spots with more optimal values.
+Please note that several hyperparameters have been adjusted to help the vignette run quickly. I will mark these spots, and explain why other values may be more optimal.
 
 I will be using BioConductor/SingleCellExperiment to store and process the data, before feeding it into the Keras interface to TensorFlow to build the actual neural network. I will mostly show the best setup I have found, with notes explaining how I tested and made decisions. With that said, let's dive into the problem.
 
-## Cut up the data
+## Input the data and break it down
 
 We will begin with processing and subsetting of the data, to get it into a form that can be fed into Keras.
 
@@ -36,15 +36,11 @@ testingSCE <- read10xCounts("~/Documents/10Xdata/5k_pbmc_protein_v3_filtered_fea
 trainingSize <- ncol(trainingSCE)
 testingSize <- ncol(testingSCE)
 
-#singler = CreateSinglerSeuratObject(counts = 'GSE74923_series_matrix.txt', annot = 'GSE74923_types.txt', project.name = 'GSE74923', min.genes = 500, min.cells = 2, npca = 10, regress.out ='nUMI', technology= 'C1', species = 'Mouse', citation = 'Kimmerling et al. 2016',reduce.file.size = T, variable.genes = 'de', normalize.gene.length = T)
-
-
-# sum(rowData(trainingSCE) != rowData(testingSCE))
-# This is a good sanity check -> the rows in each SCE are equivalent. This will not always be the case
-
 # this is a boolean list with TRUE in the indexes of proteins
 proteinList <- (rowData(trainingSCE)$Type == "Antibody Capture") & !grepl("IgG*", rowData(trainingSCE)$Symbol)
-getProteinMatrix <- function(x) { # from an SCE, gets the transposed matrix of proteins
+
+# from an SCE, gets the transposed matrix of proteins
+getProteinMatrix <- function(x) {
   x[proteinList] %>%
     counts() %>%
     as.matrix() %>%
@@ -52,7 +48,7 @@ getProteinMatrix <- function(x) { # from an SCE, gets the transposed matrix of p
     clr() # we perform a centered log ratio transform to normalize the counts
 }
 
-# tensorflow breaks if fed dashes, so we replace dashes in the protein names with underscores
+# tensorflow complains when fed dashes, so we replace any in the protein names with underscores
 fixProteinColNames <- function(x) {
   colnames(x) <- sub("-", "_", colnames(x))
   x
@@ -103,7 +99,7 @@ geneTestingSCE <- scater::normalize(geneTestingSCE)
 
 ## Select Data
 
-Here is where we decide which genes and proteins to train on. I decided to train the model on only the more highly variable genes. Hopefully this reduces noise in the model and makes it easier and faster for the model to train. I also decided to remove CD127 from the list of proteins to predict, as the actual values for it are mostly 0. 
+Here is where we decide which genes and proteins to train on. I decided to train the model on only the more highly variable genes. Hopefully this reduces noise in the model and makes it easier and faster for the model to train. 
 
 ```{r selectData, results = 'hide', message = FALSE}
 # find highly variable genes
@@ -129,7 +125,7 @@ remove(getGeneData)
 
 I tried many iterations of the model's hyperparameters, and found some with decent performance on a few important proteins. Here is a compilation of what I know about these hyperparameters, and what they do. This list is sorted with most important first.
 
-* Dropout - Dropout is the process of choosing randomly some proportion of nodes from a layer (often the input layer) to get dropped completely. This helps ensure that the model is training using all available data, as sometimes key genes are not included. Using dropout does seem to have a large positive effect on performance. Good values seem to range from ~.2 to ~.5. 
+* Dropout - I will talk more about this in more detail later, as I did a more thorough analysis of it. Dropout is the process of choosing randomly some proportion of nodes from a layer (often the input layer) to get dropped completely. This helps ensure that the model is training using all available data, as sometimes key genes are not included. Using dropout does seem to have a large positive effect on performance. Good values seem to range from ~.2 to ~.5. 
 * Learning rate - The rate at which the model changes its parameters. Values between 0.0002 and 0.001 seem to work fine.
   + If this is too high, the model will jump between local minima and potentially never converge. In the loss graph, this correlates to great variance in loss between adjacent epochs. If the model has not converged by the end of the run, it is probably losing a lot of prediction accuracy, so this is a problem
   + If this is too low, the model will simply take a long time to converge, which is not a big issue.
@@ -261,7 +257,7 @@ Here we can see a scatter plot showing on one axis the actual protein values for
 scatters()
 ```
 
-And finally, I printed out a simple list of the correlation between the model's predictions and the actual values. As you can see, many of the proteins are not able to be predicted at all by the model.
+And finally, I printed out a simple list of the correlation between the model's predictions and the actual values. As you can see, many of the proteins are not able to be predicted at all by the model, while others are quite accurate.
 
 ```{r correlations}
 correlations()
