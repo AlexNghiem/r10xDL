@@ -1,7 +1,13 @@
 Alex's Single-Cell Genomics Deep Learning Project (Summer '19)
 ================
 
-Please check out !(alexnghiem.github.io/r10xDL/)[my website] for an optimal viewing experience!
+# Structure of this site
+
+The content is organized under the articles tab in the top menu. There are two background pieces, for Single-Cell Assays and Deep Learning. 
+
+If you want to jump straight into my computational work, see the Deep Learning Workflow and Results page.
+
+Otherwise, just have a look around!
 
 ## Thank you to my mentors
 
