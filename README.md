@@ -1,7 +1,7 @@
 Alex's Single-Cell Genomics Deep Learning Project (Summer '19)
 ================
 
-Please check out !(alexnghiem.github.io/r10xDL/)[my website] for an optimal viewing experience!
+Please head over to [my website](alexnghiem.github.io/r10xDL/)!
 
 ## Thank you to my mentors
 
