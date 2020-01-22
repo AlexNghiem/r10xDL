@@ -3,11 +3,13 @@ Alex's Single-Cell Genomics Deep Learning Project (Summer '19)
 
 # Structure of this site
 
-The content is organized under the articles tab in the top menu. There are two background pieces, for Single-Cell Assays and Deep Learning. 
+The content is organized under the articles tab in the top menu.
 
 If you want to jump straight into my computational work, see the Deep Learning Workflow and Results page.
 
-Otherwise, just have a look around!
+Otherwise, here is a list of the various pages and what they offer. 
+
+* There are two background pieces, for Single-Cell Assays and Deep Learning. These are informal and offer only an overview of basic information, but will be of use for understanding my project.
 
 ## Thank you to my mentors
 
@@ -15,6 +17,4 @@ This project is a result of my internship with Raphael Gottardo's Lab at the Fre
 
 
 
-
-options(pkgdown.internet = TRUE) in order to keep the original settings. I had to turn this to false in order to get the pkgdown to compile
 
