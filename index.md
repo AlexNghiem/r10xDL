@@ -7,9 +7,12 @@ The content is organized under the articles tab in the top menu.
 
 If you want to jump straight into my computational work, see the Deep Learning Workflow and Results page.
 
-Otherwise, here is a list of the various pages and what they offer. 
+Otherwise, here is a list of the various pages and what they offer:
 
-* There are two background pieces, for Single-Cell Assays and Deep Learning. These are informal and offer only an overview of basic information, but will be of use for understanding my project.
+* **Background**: informal overviews of basic information, but enough to understand the broad strokes of my work.
+* **Deep Learning Workflow and Results**: a formal write-up of my work from the summer, showing my data, workflow, and results. It is relatively involved and will be tricky to understand in full without significant prior knowledge.
+* **Deep Learning Benchmarking - Dropout**: a semi-formal analysis of dropout as a feature in training neural networks. For most people, this section should contain a good balance of interesting science and reasonable readability.
+* **Personal Takeaways**: a highly informal diary-style discussion of my personal takeaways from the summer. (contains unapologetic candor; reader discretion advised)
 
 ## Thank you to my mentors
 

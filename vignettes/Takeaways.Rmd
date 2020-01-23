@@ -7,7 +7,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Here are some informal things I learned from the summer. Sorry, no science here! Just ranting and philosophizing. 
+Here are some informal things I learned from the summer. Sorry, no science here! Just ranting and philosophizing. Be warned - I approach these topics with shameless honesty and probably more drama than is required.
 
 ## On developing my own project (& how being lost made me independent)
 
